@@ -516,6 +516,13 @@ CREATE TABLE IF NOT EXISTS public.songs (
   artist TEXT,
   lyrics TEXT NOT NULL,
   category TEXT, -- worship, praise, hymn, etc.
+  chords TEXT, -- Guitar/Piano chords
+  key TEXT, -- Musical key (C, G, D, etc.)
+  link TEXT, -- YouTube or external link
+  language TEXT DEFAULT 'english', -- hindi, english
+  latitude DOUBLE PRECISION, -- Location where song was recorded/performed
+  longitude DOUBLE PRECISION,
+  location TEXT, -- Location name/description
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );

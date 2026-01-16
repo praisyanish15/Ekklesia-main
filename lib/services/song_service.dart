@@ -55,12 +55,19 @@ class SongService {
   }
 
   /// Create a new song (admin/super_admin only)
-  Future<Song> createSong({
+  Future<Song> addSong({
     required String churchId,
     required String title,
     String? artist,
     required String lyrics,
     String? category,
+    String? chords,
+    String? key,
+    String? link,
+    String language = 'english',
+    double? latitude,
+    double? longitude,
+    String? location,
   }) async {
     try {
       final response = await _supabase
@@ -71,6 +78,13 @@ class SongService {
             'artist': artist,
             'lyrics': lyrics,
             'category': category,
+            'chords': chords,
+            'key': key,
+            'link': link,
+            'language': language,
+            'latitude': latitude,
+            'longitude': longitude,
+            'location': location,
           })
           .select()
           .single();

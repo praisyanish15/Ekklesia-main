@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../../models/song_model.dart';
+import '../../models/user_model.dart';
 import '../../services/song_service.dart';
+import '../../providers/auth_provider.dart';
 import 'song_detail_screen.dart';
+import 'add_song_screen.dart';
 
 class SongsListScreen extends StatefulWidget {
   final String churchId;
@@ -236,6 +240,31 @@ class _SongsListScreenState extends State<SongsListScreen> {
                           ),
           ),
         ],
+      ),
+      floatingActionButton: Consumer<AuthProvider>(
+        builder: (context, authProvider, child) {
+          final user = authProvider.currentUser;
+          final isAdmin = user?.role == UserRole.admin || user?.role == UserRole.commander;
+
+          if (!isAdmin) return const SizedBox.shrink();
+
+          return FloatingActionButton.extended(
+            onPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AddSongScreen(churchId: widget.churchId),
+                ),
+              );
+
+              if (result == true) {
+                _loadSongs();
+              }
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Add Song'),
+          );
+        },
       ),
     );
   }

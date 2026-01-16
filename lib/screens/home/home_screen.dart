@@ -32,7 +32,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ekklesia'),
+        title: Text(
+          'EKKLESIA',
+          style: GoogleFonts.cormorantGaramond(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 2.0,
+          ),
+        ),
         actions: [
           // Notification Icon
           IconButton(

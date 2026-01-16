@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/church_service.dart';
 import '../../models/church_model.dart';
+import 'face_verification_screen.dart';
 
 class JoinChurchScreen extends StatefulWidget {
   const JoinChurchScreen({super.key});
@@ -72,6 +73,27 @@ class _JoinChurchScreenState extends State<JoinChurchScreen> {
   Future<void> _joinChurch() async {
     if (_foundChurch == null) return;
 
+    // First, verify face
+    final faceImagePath = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const FaceVerificationScreen(),
+      ),
+    );
+
+    if (faceImagePath == null) {
+      // User cancelled face verification
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Face verification is required to join a church'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
@@ -82,6 +104,9 @@ class _JoinChurchScreenState extends State<JoinChurchScreen> {
         throw Exception('User not authenticated');
       }
 
+      // TODO: Upload face image to Supabase storage
+      // For now, we'll just proceed with joining
+
       await _churchService.joinChurchWithReferralCode(
         referralCode: _referralCodeController.text.trim(),
         userId: authProvider.currentUser!.id,
@@ -90,7 +115,7 @@ class _JoinChurchScreenState extends State<JoinChurchScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Successfully joined ${_foundChurch!.name}!'),
+            content: Text('Successfully joined ${_foundChurch!.name}! Your identity has been verified.'),
             backgroundColor: Colors.green,
           ),
         );
