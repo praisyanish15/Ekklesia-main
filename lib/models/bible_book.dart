@@ -14,7 +14,7 @@ class BibleBook {
 
 enum Testament {
   old,
-  new,
+  newTestament,
 }
 
 class BibleBooks {
@@ -73,41 +73,41 @@ class BibleBooks {
   // New Testament Books
   static const List<BibleBook> newTestament = [
     // Gospels
-    BibleBook(name: 'Matthew', abbreviation: 'Matt', chapters: 28, testament: Testament.new),
-    BibleBook(name: 'Mark', abbreviation: 'Mark', chapters: 16, testament: Testament.new),
-    BibleBook(name: 'Luke', abbreviation: 'Luke', chapters: 24, testament: Testament.new),
-    BibleBook(name: 'John', abbreviation: 'John', chapters: 21, testament: Testament.new),
+    BibleBook(name: 'Matthew', abbreviation: 'Matt', chapters: 28, testament: Testament.newTestament),
+    BibleBook(name: 'Mark', abbreviation: 'Mark', chapters: 16, testament: Testament.newTestament),
+    BibleBook(name: 'Luke', abbreviation: 'Luke', chapters: 24, testament: Testament.newTestament),
+    BibleBook(name: 'John', abbreviation: 'John', chapters: 21, testament: Testament.newTestament),
 
     // History
-    BibleBook(name: 'Acts', abbreviation: 'Acts', chapters: 28, testament: Testament.new),
+    BibleBook(name: 'Acts', abbreviation: 'Acts', chapters: 28, testament: Testament.newTestament),
 
     // Pauline Epistles
-    BibleBook(name: 'Romans', abbreviation: 'Rom', chapters: 16, testament: Testament.new),
-    BibleBook(name: '1 Corinthians', abbreviation: '1 Cor', chapters: 16, testament: Testament.new),
-    BibleBook(name: '2 Corinthians', abbreviation: '2 Cor', chapters: 13, testament: Testament.new),
-    BibleBook(name: 'Galatians', abbreviation: 'Gal', chapters: 6, testament: Testament.new),
-    BibleBook(name: 'Ephesians', abbreviation: 'Eph', chapters: 6, testament: Testament.new),
-    BibleBook(name: 'Philippians', abbreviation: 'Phil', chapters: 4, testament: Testament.new),
-    BibleBook(name: 'Colossians', abbreviation: 'Col', chapters: 4, testament: Testament.new),
-    BibleBook(name: '1 Thessalonians', abbreviation: '1 Thess', chapters: 5, testament: Testament.new),
-    BibleBook(name: '2 Thessalonians', abbreviation: '2 Thess', chapters: 3, testament: Testament.new),
-    BibleBook(name: '1 Timothy', abbreviation: '1 Tim', chapters: 6, testament: Testament.new),
-    BibleBook(name: '2 Timothy', abbreviation: '2 Tim', chapters: 4, testament: Testament.new),
-    BibleBook(name: 'Titus', abbreviation: 'Titus', chapters: 3, testament: Testament.new),
-    BibleBook(name: 'Philemon', abbreviation: 'Phlm', chapters: 1, testament: Testament.new),
+    BibleBook(name: 'Romans', abbreviation: 'Rom', chapters: 16, testament: Testament.newTestament),
+    BibleBook(name: '1 Corinthians', abbreviation: '1 Cor', chapters: 16, testament: Testament.newTestament),
+    BibleBook(name: '2 Corinthians', abbreviation: '2 Cor', chapters: 13, testament: Testament.newTestament),
+    BibleBook(name: 'Galatians', abbreviation: 'Gal', chapters: 6, testament: Testament.newTestament),
+    BibleBook(name: 'Ephesians', abbreviation: 'Eph', chapters: 6, testament: Testament.newTestament),
+    BibleBook(name: 'Philippians', abbreviation: 'Phil', chapters: 4, testament: Testament.newTestament),
+    BibleBook(name: 'Colossians', abbreviation: 'Col', chapters: 4, testament: Testament.newTestament),
+    BibleBook(name: '1 Thessalonians', abbreviation: '1 Thess', chapters: 5, testament: Testament.newTestament),
+    BibleBook(name: '2 Thessalonians', abbreviation: '2 Thess', chapters: 3, testament: Testament.newTestament),
+    BibleBook(name: '1 Timothy', abbreviation: '1 Tim', chapters: 6, testament: Testament.newTestament),
+    BibleBook(name: '2 Timothy', abbreviation: '2 Tim', chapters: 4, testament: Testament.newTestament),
+    BibleBook(name: 'Titus', abbreviation: 'Titus', chapters: 3, testament: Testament.newTestament),
+    BibleBook(name: 'Philemon', abbreviation: 'Phlm', chapters: 1, testament: Testament.newTestament),
 
     // General Epistles
-    BibleBook(name: 'Hebrews', abbreviation: 'Heb', chapters: 13, testament: Testament.new),
-    BibleBook(name: 'James', abbreviation: 'Jas', chapters: 5, testament: Testament.new),
-    BibleBook(name: '1 Peter', abbreviation: '1 Pet', chapters: 5, testament: Testament.new),
-    BibleBook(name: '2 Peter', abbreviation: '2 Pet', chapters: 3, testament: Testament.new),
-    BibleBook(name: '1 John', abbreviation: '1 John', chapters: 5, testament: Testament.new),
-    BibleBook(name: '2 John', abbreviation: '2 John', chapters: 1, testament: Testament.new),
-    BibleBook(name: '3 John', abbreviation: '3 John', chapters: 1, testament: Testament.new),
-    BibleBook(name: 'Jude', abbreviation: 'Jude', chapters: 1, testament: Testament.new),
+    BibleBook(name: 'Hebrews', abbreviation: 'Heb', chapters: 13, testament: Testament.newTestament),
+    BibleBook(name: 'James', abbreviation: 'Jas', chapters: 5, testament: Testament.newTestament),
+    BibleBook(name: '1 Peter', abbreviation: '1 Pet', chapters: 5, testament: Testament.newTestament),
+    BibleBook(name: '2 Peter', abbreviation: '2 Pet', chapters: 3, testament: Testament.newTestament),
+    BibleBook(name: '1 John', abbreviation: '1 John', chapters: 5, testament: Testament.newTestament),
+    BibleBook(name: '2 John', abbreviation: '2 John', chapters: 1, testament: Testament.newTestament),
+    BibleBook(name: '3 John', abbreviation: '3 John', chapters: 1, testament: Testament.newTestament),
+    BibleBook(name: 'Jude', abbreviation: 'Jude', chapters: 1, testament: Testament.newTestament),
 
     // Prophecy
-    BibleBook(name: 'Revelation', abbreviation: 'Rev', chapters: 22, testament: Testament.new),
+    BibleBook(name: 'Revelation', abbreviation: 'Rev', chapters: 22, testament: Testament.newTestament),
   ];
 
   static List<BibleBook> get allBooks => [...oldTestament, ...newTestament];

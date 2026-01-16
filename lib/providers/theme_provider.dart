@@ -3,7 +3,7 @@ import '../models/church_theme.dart';
 import '../services/church_service.dart';
 
 class ThemeProvider with ChangeNotifier {
-  ChurchTheme _currentTheme = ChurchThemes.spiritualBlue;
+  ChurchTheme _currentTheme = ChurchThemes.ekklesiaLight;
   final ChurchService _churchService = ChurchService();
 
   ChurchTheme get currentTheme => _currentTheme;
@@ -40,7 +40,7 @@ class ThemeProvider with ChangeNotifier {
 
   /// Reset to default theme
   void resetToDefault() {
-    _currentTheme = ChurchThemes.spiritualBlue;
+    _currentTheme = ChurchThemes.ekklesiaLight;
     notifyListeners();
   }
 }

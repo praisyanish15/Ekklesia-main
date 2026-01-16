@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 enum ChurchThemeType {
+  ekklesiaLight,
+  ekklesiaDark,
   spiritualBlue,
   holyPurple,
   graceGreen,
@@ -38,6 +41,10 @@ class ChurchTheme {
   // Convert to string for database storage
   String get value {
     switch (type) {
+      case ChurchThemeType.ekklesiaLight:
+        return 'ekklesia_light';
+      case ChurchThemeType.ekklesiaDark:
+        return 'ekklesia_dark';
       case ChurchThemeType.spiritualBlue:
         return 'spiritual_blue';
       case ChurchThemeType.holyPurple:
@@ -54,6 +61,12 @@ class ChurchTheme {
   // Create from database value
   static ChurchTheme fromValue(String value) {
     switch (value) {
+      case 'ekklesia_light':
+        return ChurchThemes.ekklesiaLight;
+      case 'ekklesia_dark':
+        return ChurchThemes.ekklesiaDark;
+      case 'ekklesia_gold': // Legacy support
+        return ChurchThemes.ekklesiaDark;
       case 'spiritual_blue':
         return ChurchThemes.spiritualBlue;
       case 'holy_purple':
@@ -65,7 +78,7 @@ class ChurchTheme {
       case 'celestial_dark':
         return ChurchThemes.celestialDark;
       default:
-        return ChurchThemes.spiritualBlue;
+        return ChurchThemes.ekklesiaLight;
     }
   }
 
@@ -91,45 +104,105 @@ class ChurchTheme {
       ),
       cardTheme: CardThemeData(
         color: cardColor,
-        elevation: 2,
+        elevation: brightness == Brightness.light ? 0 : 2,
+        shadowColor: Colors.black.withOpacity(0.05),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
+          side: brightness == Brightness.light
+            ? BorderSide(color: const Color(0xFFE5E5E0), width: 1)
+            : BorderSide.none,
         ),
       ),
+      iconTheme: IconThemeData(
+        color: primaryColor, // Active state: Soft Gold
+        size: 24,
+      ),
       appBarTheme: AppBarTheme(
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
+        backgroundColor: backgroundColor,
+        foregroundColor: textColor,
         elevation: 0,
         centerTitle: true,
+        iconTheme: IconThemeData(color: primaryColor),
+      ),
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: cardColor,
+        selectedItemColor: primaryColor, // Active: Gold
+        unselectedItemColor: subtitleColor, // Inactive: Slate Gray
+        selectedIconTheme: IconThemeData(color: primaryColor),
+        unselectedIconTheme: IconThemeData(color: subtitleColor),
+        type: BottomNavigationBarType.fixed,
+        elevation: 8,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryColor,
-          foregroundColor: Colors.white,
+          foregroundColor: brightness == Brightness.light ? const Color(0xFF0B1929) : Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 0,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: primaryColor,
+          side: BorderSide(color: primaryColor, width: 1.5),
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
         ),
       ),
-      textTheme: TextTheme(
-        headlineLarge: TextStyle(
-          color: textColor,
-          fontSize: 32,
-          fontWeight: FontWeight.bold,
-        ),
-        headlineMedium: TextStyle(
-          color: textColor,
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-        ),
-        bodyLarge: TextStyle(
-          color: textColor,
-          fontSize: 16,
-        ),
-        bodyMedium: TextStyle(
-          color: subtitleColor,
-          fontSize: 14,
+      textTheme: GoogleFonts.interTextTheme(
+        TextTheme(
+          // Headings use Cormorant Garamond (serif, reverent)
+          headlineLarge: GoogleFonts.cormorantGaramond(
+            color: textColor,
+            fontSize: 32,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
+          headlineMedium: GoogleFonts.cormorantGaramond(
+            color: textColor,
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
+          headlineSmall: GoogleFonts.cormorantGaramond(
+            color: textColor,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+          titleLarge: GoogleFonts.cormorantGaramond(
+            color: textColor,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+          // Body text uses Inter (clean sans-serif)
+          bodyLarge: GoogleFonts.inter(
+            color: textColor,
+            fontSize: 16,
+            fontWeight: FontWeight.w400,
+            letterSpacing: 0.15,
+          ),
+          bodyMedium: GoogleFonts.inter(
+            color: subtitleColor,
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            letterSpacing: 0.25,
+          ),
+          bodySmall: GoogleFonts.inter(
+            color: subtitleColor,
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+          ),
+          labelLarge: GoogleFonts.inter(
+            color: textColor,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.5,
+          ),
         ),
       ),
     );
@@ -137,6 +210,36 @@ class ChurchTheme {
 }
 
 class ChurchThemes {
+  // 0. Ekklesia Light - Light mode with Off-White background and Soft Gold accents
+  static const ekklesiaLight = ChurchTheme(
+    type: ChurchThemeType.ekklesiaLight,
+    name: 'Ekklesia Light',
+    description: 'Off-White with Soft Gold accents - clean and reverent',
+    primaryColor: Color(0xFFD4A574), // Soft Gold
+    secondaryColor: Color(0xFFE8B88B), // Light Soft Gold
+    accentColor: Color(0xFFB8956A), // Darker Soft Gold
+    backgroundColor: Color(0xFFF5F5F0), // Off-White
+    cardColor: Color(0xFFFFFFFF), // White cards
+    textColor: Color(0xFF2D3748), // Charcoal
+    subtitleColor: Color(0xFF64748B), // Slate Gray
+    brightness: Brightness.light,
+  );
+
+  // 1. Ekklesia Dark - Dark mode with Midnight Blue and Soft Gold glow
+  static const ekklesiaDark = ChurchTheme(
+    type: ChurchThemeType.ekklesiaDark,
+    name: 'Ekklesia Dark',
+    description: 'Midnight Blue with Soft Gold glow - contemplative and sacred',
+    primaryColor: Color(0xFFD4A574), // Soft Gold
+    secondaryColor: Color(0xFFE8B88B), // Light Soft Gold
+    accentColor: Color(0xFFB8956A), // Darker Soft Gold
+    backgroundColor: Color(0xFF0B1929), // Midnight Blue
+    cardColor: Color(0xFF14233B), // Darker card for dark mode
+    textColor: Color(0xFFF5F5F0), // Off-White
+    subtitleColor: Color(0xFF94A3B8), // Slate Gray
+    brightness: Brightness.dark,
+  );
+
   // 1. Spiritual Blue - Calm and peaceful, like the sky and water
   static const spiritualBlue = ChurchTheme(
     type: ChurchThemeType.spiritualBlue,
@@ -213,6 +316,8 @@ class ChurchThemes {
   );
 
   static List<ChurchTheme> get all => [
+        ekklesiaLight,
+        ekklesiaDark,
         spiritualBlue,
         holyPurple,
         graceGreen,

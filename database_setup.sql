@@ -441,3 +441,272 @@ WHERE schemaname = 'public';
 -- =====================================================
 -- Your Ekklesia Church Management App database is now set up and ready to use.
 -- Remember to test all functionalities and adjust policies as needed for your specific use cases.
+-- =====================================================
+-- SERMONS TABLE
+-- =====================================================
+CREATE TABLE IF NOT EXISTS public.sermons (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  church_id UUID NOT NULL REFERENCES public.churches(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  pastor_name TEXT NOT NULL,
+  description TEXT,
+  key_points TEXT[] DEFAULT '{}',
+  verses TEXT[] DEFAULT '{}',
+  date TIMESTAMP NOT NULL,
+  audio_url TEXT,
+  video_url TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- RLS policies for sermons
+ALTER TABLE public.sermons ENABLE ROW LEVEL SECURITY;
+
+-- Anyone can view sermons from their church
+CREATE POLICY "Users can view sermons from their church"
+  ON public.sermons FOR SELECT
+  USING (
+    auth.uid() IN (
+      SELECT user_id FROM public.church_members
+      WHERE church_id = sermons.church_id
+      AND role IN ('super_admin', 'admin', 'committee', 'member')
+    )
+  );
+
+-- Only admins and super_admins can insert sermons
+CREATE POLICY "Admins can insert sermons"
+  ON public.sermons FOR INSERT
+  WITH CHECK (
+    auth.uid() IN (
+      SELECT user_id FROM public.church_members
+      WHERE church_id = sermons.church_id
+      AND role IN ('super_admin', 'admin')
+    )
+  );
+
+-- Only admins and super_admins can update sermons
+CREATE POLICY "Admins can update sermons"
+  ON public.sermons FOR UPDATE
+  USING (
+    auth.uid() IN (
+      SELECT user_id FROM public.church_members
+      WHERE church_id = sermons.church_id
+      AND role IN ('super_admin', 'admin')
+    )
+  );
+
+-- Only admins and super_admins can delete sermons
+CREATE POLICY "Admins can delete sermons"
+  ON public.sermons FOR DELETE
+  USING (
+    auth.uid() IN (
+      SELECT user_id FROM public.church_members
+      WHERE church_id = sermons.church_id
+      AND role IN ('super_admin', 'admin')
+    )
+  );
+
+-- =====================================================
+-- SONGS TABLE (Worship Songs/Hymns with Lyrics)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS public.songs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  church_id UUID NOT NULL REFERENCES public.churches(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  artist TEXT,
+  lyrics TEXT NOT NULL,
+  category TEXT, -- worship, praise, hymn, etc.
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- RLS policies for songs
+ALTER TABLE public.songs ENABLE ROW LEVEL SECURITY;
+
+-- Anyone can view songs from their church
+CREATE POLICY "Users can view songs from their church"
+  ON public.songs FOR SELECT
+  USING (
+    auth.uid() IN (
+      SELECT user_id FROM public.church_members
+      WHERE church_id = songs.church_id
+      AND role IN ('super_admin', 'admin', 'committee', 'member')
+    )
+  );
+
+-- Only admins and super_admins can insert songs
+CREATE POLICY "Admins can insert songs"
+  ON public.songs FOR INSERT
+  WITH CHECK (
+    auth.uid() IN (
+      SELECT user_id FROM public.church_members
+      WHERE church_id = songs.church_id
+      AND role IN ('super_admin', 'admin')
+    )
+  );
+
+-- Only admins and super_admins can update songs
+CREATE POLICY "Admins can update songs"
+  ON public.songs FOR UPDATE
+  USING (
+    auth.uid() IN (
+      SELECT user_id FROM public.church_members
+      WHERE church_id = songs.church_id
+      AND role IN ('super_admin', 'admin')
+    )
+  );
+
+-- Only admins and super_admins can delete songs
+CREATE POLICY "Admins can delete songs"
+  ON public.songs FOR DELETE
+  USING (
+    auth.uid() IN (
+      SELECT user_id FROM public.church_members
+      WHERE church_id = songs.church_id
+      AND role IN ('super_admin', 'admin')
+    )
+  );
+
+-- =====================================================
+-- COMMITTEE MEMBERS TABLE
+-- =====================================================
+CREATE TABLE IF NOT EXISTS public.committee_members (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  church_id UUID NOT NULL REFERENCES public.churches(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  position TEXT NOT NULL CHECK (position IN ('president', 'secretary', 'treasurer', 'member')),
+  appointed_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(church_id, user_id)
+);
+
+-- RLS policies for committee members
+ALTER TABLE public.committee_members ENABLE ROW LEVEL SECURITY;
+
+-- Anyone can view committee members from their church
+CREATE POLICY "Users can view committee members from their church"
+  ON public.committee_members FOR SELECT
+  USING (
+    auth.uid() IN (
+      SELECT user_id FROM public.church_members
+      WHERE church_id = committee_members.church_id
+      AND role IN ('super_admin', 'admin', 'committee', 'member')
+    )
+  );
+
+-- Only super_admins can insert committee members
+CREATE POLICY "Super admins can insert committee members"
+  ON public.committee_members FOR INSERT
+  WITH CHECK (
+    auth.uid() IN (
+      SELECT user_id FROM public.church_members
+      WHERE church_id = committee_members.church_id
+      AND role = 'super_admin'
+    )
+  );
+
+-- Only super_admins can update committee members
+CREATE POLICY "Super admins can update committee members"
+  ON public.committee_members FOR UPDATE
+  USING (
+    auth.uid() IN (
+      SELECT user_id FROM public.church_members
+      WHERE church_id = committee_members.church_id
+      AND role = 'super_admin'
+    )
+  );
+
+-- Only super_admins can delete committee members
+CREATE POLICY "Super admins can delete committee members"
+  ON public.committee_members FOR DELETE
+  USING (
+    auth.uid() IN (
+      SELECT user_id FROM public.church_members
+      WHERE church_id = committee_members.church_id
+      AND role = 'super_admin'
+    )
+  );
+
+-- Add latitude and longitude to churches table for Google Maps integration
+ALTER TABLE public.churches ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION;
+ALTER TABLE public.churches ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION;
+
+-- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_sermons_church_id ON public.sermons(church_id);
+CREATE INDEX IF NOT EXISTS idx_sermons_date ON public.sermons(date DESC);
+CREATE INDEX IF NOT EXISTS idx_songs_church_id ON public.songs(church_id);
+CREATE INDEX IF NOT EXISTS idx_committee_members_church_id ON public.committee_members(church_id);
+CREATE INDEX IF NOT EXISTS idx_committee_members_position ON public.committee_members(position);
+
+-- =====================================================
+-- CHURCH PAYMENT SETTINGS (QR Code & Bank Details)
+-- =====================================================
+
+-- Add payment fields to churches table
+ALTER TABLE public.churches ADD COLUMN IF NOT EXISTS payment_qr_code_url TEXT;
+ALTER TABLE public.churches ADD COLUMN IF NOT EXISTS upi_id TEXT;
+ALTER TABLE public.churches ADD COLUMN IF NOT EXISTS razorpay_key_id TEXT;
+
+-- Create church bank details table
+CREATE TABLE IF NOT EXISTS public.church_bank_details (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  church_id UUID NOT NULL REFERENCES public.churches(id) ON DELETE CASCADE,
+  bank_name TEXT NOT NULL,
+  account_holder_name TEXT NOT NULL,
+  account_number TEXT NOT NULL,
+  ifsc_code TEXT NOT NULL,
+  branch_name TEXT,
+  account_type TEXT CHECK (account_type IN ('savings', 'current')),
+  is_primary BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(church_id, account_number)
+);
+
+-- RLS policies for church bank details
+ALTER TABLE public.church_bank_details ENABLE ROW LEVEL SECURITY;
+
+-- Members can view bank details of their church
+CREATE POLICY "Members can view church bank details"
+  ON public.church_bank_details FOR SELECT
+  USING (
+    auth.uid() IN (
+      SELECT user_id FROM public.church_members
+      WHERE church_id = church_bank_details.church_id
+      AND role IN ('super_admin', 'admin', 'committee', 'member')
+    )
+  );
+
+-- Only super_admins can insert/update/delete bank details
+CREATE POLICY "Super admins can insert bank details"
+  ON public.church_bank_details FOR INSERT
+  WITH CHECK (
+    auth.uid() IN (
+      SELECT user_id FROM public.church_members
+      WHERE church_id = church_bank_details.church_id
+      AND role = 'super_admin'
+    )
+  );
+
+CREATE POLICY "Super admins can update bank details"
+  ON public.church_bank_details FOR UPDATE
+  USING (
+    auth.uid() IN (
+      SELECT user_id FROM public.church_members
+      WHERE church_id = church_bank_details.church_id
+      AND role = 'super_admin'
+    )
+  );
+
+CREATE POLICY "Super admins can delete bank details"
+  ON public.church_bank_details FOR DELETE
+  USING (
+    auth.uid() IN (
+      SELECT user_id FROM public.church_members
+      WHERE church_id = church_bank_details.church_id
+      AND role = 'super_admin'
+    )
+  );
+
+-- Create index for performance
+CREATE INDEX IF NOT EXISTS idx_church_bank_details_church_id ON public.church_bank_details(church_id);
+

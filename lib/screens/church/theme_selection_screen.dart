@@ -254,6 +254,10 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> {
 
   IconData _getThemeIcon(ChurchThemeType type) {
     switch (type) {
+      case ChurchThemeType.ekklesiaLight:
+        return Icons.wb_sunny;
+      case ChurchThemeType.ekklesiaDark:
+        return Icons.nights_stay;
       case ChurchThemeType.spiritualBlue:
         return Icons.water_drop;
       case ChurchThemeType.holyPurple:

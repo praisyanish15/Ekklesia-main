@@ -216,6 +216,34 @@ class ChurchService {
     }
   }
 
+  /// Get all church members (including pending)
+  Future<List<Map<String, dynamic>>> getChurchMembers(String churchId) async {
+    try {
+      final response = await _supabase
+          .from('church_members')
+          .select('*, profiles(*)')
+          .eq('church_id', churchId)
+          .order('joined_at', ascending: false);
+
+      // Flatten the nested profiles data
+      return List<Map<String, dynamic>>.from(response.map((member) {
+        final profiles = member['profiles'] as Map<String, dynamic>?;
+        return {
+          'id': member['id'],
+          'role': member['role'],
+          'joined_at': member['joined_at'],
+          'name': profiles?['name'] ?? 'Unknown',
+          'email': profiles?['email'] ?? '',
+          'photo_url': profiles?['photo_url'],
+          'address': profiles?['address'] ?? '',
+          'phone_number': profiles?['phone_number'],
+        };
+      }));
+    } catch (e) {
+      throw Exception('Failed to get church members: ${e.toString()}');
+    }
+  }
+
   /// Get pending members for approval
   Future<List<Map<String, dynamic>>> getPendingMembers(String churchId) async {
     try {

@@ -15,6 +15,11 @@ class ChurchModel {
   final String referralCode;
   final String? createdBy;
   final String theme;
+  final double? latitude;
+  final double? longitude;
+  final String? paymentQrCodeUrl;
+  final String? upiId;
+  final String? razorpayKeyId;
   final DateTime createdAt;
   final DateTime? updatedAt;
 
@@ -35,6 +40,11 @@ class ChurchModel {
     required this.referralCode,
     this.createdBy,
     this.theme = 'spiritual_blue',
+    this.latitude,
+    this.longitude,
+    this.paymentQrCodeUrl,
+    this.upiId,
+    this.razorpayKeyId,
     required this.createdAt,
     this.updatedAt,
   });
@@ -57,6 +67,11 @@ class ChurchModel {
       referralCode: json['referral_code'] as String,
       createdBy: json['created_by'] as String?,
       theme: json['theme'] as String? ?? 'spiritual_blue',
+      latitude: json['latitude'] as double?,
+      longitude: json['longitude'] as double?,
+      paymentQrCodeUrl: json['payment_qr_code_url'] as String?,
+      upiId: json['upi_id'] as String?,
+      razorpayKeyId: json['razorpay_key_id'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: json['updated_at'] != null
           ? DateTime.parse(json['updated_at'] as String)
@@ -82,6 +97,11 @@ class ChurchModel {
       'referral_code': referralCode,
       'created_by': createdBy,
       'theme': theme,
+      'latitude': latitude,
+      'longitude': longitude,
+      'payment_qr_code_url': paymentQrCodeUrl,
+      'upi_id': upiId,
+      'razorpay_key_id': razorpayKeyId,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
     };

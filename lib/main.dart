@@ -5,6 +5,7 @@ import 'services/notification_service.dart';
 import 'providers/auth_provider.dart';
 import 'providers/bible_provider.dart';
 import 'providers/theme_provider.dart';
+import 'screens/splash/landing_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/home/home_screen.dart';
@@ -47,6 +48,7 @@ class MyApp extends StatelessWidget {
               : ThemeMode.light,
           home: const AuthWrapper(),
           routes: {
+            '/landing': (context) => const LandingScreen(),
             '/login': (context) => const LoginScreen(),
             '/register': (context) => const RegisterScreen(),
             '/home': (context) => const HomeScreen(),
@@ -77,15 +79,17 @@ class _AuthWrapperState extends State<AuthWrapper> {
   }
 
   Future<void> _checkAuth() async {
-    final authProvider = context.read<AuthProvider>();
-    final themeProvider = context.read<ThemeProvider>();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final authProvider = context.read<AuthProvider>();
+      final themeProvider = context.read<ThemeProvider>();
 
-    await authProvider.initialize();
+      await authProvider.initialize();
 
-    // Load church theme if user is authenticated
-    if (authProvider.isAuthenticated && authProvider.currentUser != null) {
-      await themeProvider.loadChurchTheme(authProvider.currentUser!.id);
-    }
+      // Load church theme if user is authenticated
+      if (authProvider.isAuthenticated && authProvider.currentUser != null) {
+        await themeProvider.loadChurchTheme(authProvider.currentUser!.id);
+      }
+    });
   }
 
   @override
