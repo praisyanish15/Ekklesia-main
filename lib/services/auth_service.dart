@@ -88,6 +88,16 @@ class AuthService {
         throw Exception('Failed to sign in');
       }
 
+      // Check if email is confirmed (only if confirmation is required)
+      if (response.user!.emailConfirmedAt == null) {
+        // Sign out the user since they can't proceed
+        await _supabase.auth.signOut();
+        throw Exception(
+          'Email not verified. Please check your email for the verification link. '
+          'If you did not receive it, contact your administrator to disable email confirmation in Supabase settings.'
+        );
+      }
+
       // Fetch user profile
       final userProfile = await _supabase
           .from('profiles')
@@ -96,6 +106,14 @@ class AuthService {
           .single();
 
       return UserModel.fromJson(userProfile);
+    } on AuthException catch (e) {
+      if (e.message.contains('Email not confirmed')) {
+        throw Exception(
+          'Email not verified. Please verify your email before signing in. '
+          'Check your inbox for the verification link.'
+        );
+      }
+      throw Exception('Sign in failed: ${e.message}');
     } catch (e) {
       throw Exception('Sign in failed: ${e.toString()}');
     }
