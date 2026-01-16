@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/bank_details_model.dart';
 import '../models/church_model.dart';
 import 'supabase_service.dart';

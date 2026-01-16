@@ -8,6 +8,7 @@ import '../../models/user_model.dart';
 import '../church/church_search_screen.dart';
 import '../church/church_info_screen.dart';
 import '../bible/bible_screen.dart';
+import '../worship/worship_tab.dart';
 import '../notifications/notifications_screen.dart';
 import '../donations/donations_screen.dart';
 
@@ -25,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
     const HomeTab(),
     const ChurchSearchScreen(),
     const BibleScreen(),
+    const WorshipTab(),
     const NotificationsScreen(),
     const DonationsScreen(),
   ];
@@ -47,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.notifications),
             onPressed: () {
               setState(() {
-                _selectedIndex = 3;
+                _selectedIndex = 4;
               });
             },
           ),
@@ -78,6 +80,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       onTap: () {
                         Future.delayed(Duration.zero, () {
                           Navigator.of(context).pushNamed('/profile');
+                        });
+                      },
+                    ),
+                    PopupMenuItem(
+                      child: const ListTile(
+                        leading: Icon(Icons.group_add),
+                        title: Text('Join Church'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      onTap: () {
+                        Future.delayed(Duration.zero, () {
+                          Navigator.of(context).pushNamed('/join-church');
                         });
                       },
                     ),
@@ -140,6 +154,10 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.book),
             label: 'Bible',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.music_note),
+            label: 'Worship',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.notifications),
@@ -275,14 +293,6 @@ class _HomeTabState extends State<HomeTab> {
                   crossAxisSpacing: 16,
                   children: [
                     _QuickActionCard(
-                      icon: Icons.group_add,
-                      title: 'Join Church',
-                      color: Colors.blue,
-                      onTap: () {
-                        Navigator.of(context).pushNamed('/join-church');
-                      },
-                    ),
-                    _QuickActionCard(
                       icon: Icons.church,
                       title: 'Find Church',
                       onTap: () {
@@ -294,6 +304,18 @@ class _HomeTabState extends State<HomeTab> {
                       title: 'Read Bible',
                       onTap: () {
                         Navigator.of(context).pushNamed('/bible');
+                      },
+                    ),
+                    _QuickActionCard(
+                      icon: Icons.music_note,
+                      title: 'Worship',
+                      color: Colors.deepPurple,
+                      onTap: () {
+                        // Switch to Worship tab
+                        final homeScreen = context.findAncestorStateOfType<_HomeScreenState>();
+                        homeScreen?.setState(() {
+                          homeScreen._selectedIndex = 3;
+                        });
                       },
                     ),
                     _QuickActionCard(
