@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import '../models/bank_details_model.dart';
 import '../models/church_model.dart';
 import 'supabase_service.dart';
@@ -160,7 +161,6 @@ class PaymentSettingsService {
   /// Upload QR code image to Supabase Storage
   Future<String> uploadQrCodeImage({
     required String churchId,
-    required String filePath,
     required List<int> fileBytes,
   }) async {
     try {
@@ -169,8 +169,8 @@ class PaymentSettingsService {
 
       await _supabase.storage.from('church-assets').uploadBinary(
             path,
-            fileBytes,
-            fileOptions: const FileOptions(
+            Uint8List.fromList(fileBytes),
+            fileOptions: FileOptions(
               contentType: 'image/png',
               upsert: true,
             ),

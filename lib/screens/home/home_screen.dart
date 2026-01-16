@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/church_service.dart';
 import '../../models/church_model.dart';
+import '../../models/user_model.dart';
 import '../church/church_search_screen.dart';
 import '../church/church_info_screen.dart';
 import '../bible/bible_screen.dart';

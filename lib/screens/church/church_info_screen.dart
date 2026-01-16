@@ -135,7 +135,10 @@ class _ChurchInfoScreenState extends State<ChurchInfoScreen>
         controller: _tabController,
         children: [
           _OverviewTab(church: widget.church),
-          ChurchMembersScreen(churchId: widget.church.id),
+          ChurchMembersScreen(
+            churchId: widget.church.id,
+            churchName: widget.church.name,
+          ),
           SermonsListScreen(
             churchId: widget.church.id,
             churchName: widget.church.name,
@@ -326,6 +329,7 @@ class _OverviewTab extends StatelessWidget {
                     MaterialPageRoute(
                       builder: (context) => ChurchMembersScreen(
                         churchId: church.id,
+                        churchName: church.name,
                       ),
                     ),
                   );
