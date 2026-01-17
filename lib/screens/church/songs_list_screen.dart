@@ -5,6 +5,7 @@ import '../../models/song_model.dart';
 import '../../models/user_model.dart';
 import '../../services/song_service.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/banner_ad_widget.dart';
 import 'song_detail_screen.dart';
 import 'add_song_screen.dart';
 
@@ -96,6 +97,12 @@ class _SongsListScreenState extends State<SongsListScreen> {
       ),
       body: Column(
         children: [
+          // Banner Ad
+          const Padding(
+            padding: EdgeInsets.only(top: 8.0),
+            child: BannerAdWidget(),
+          ),
+
           // Search bar
           Padding(
             padding: const EdgeInsets.all(16.0),

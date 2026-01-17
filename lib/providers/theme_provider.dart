@@ -9,17 +9,18 @@ class ThemeProvider with ChangeNotifier {
   ChurchTheme get currentTheme => _currentTheme;
   ThemeData get themeData => _currentTheme.toThemeData();
 
-  /// Load theme from user's church
-  Future<void> loadChurchTheme(String userId) async {
-    try {
-      final churches = await _churchService.getUserChurches(userId);
+  /// Load theme from user's church using churchId
+  Future<void> loadChurchTheme(String? churchId) async {
+    if (churchId == null) {
+      debugPrint('No church ID provided, using default theme');
+      return;
+    }
 
-      if (churches.isNotEmpty) {
-        // Use the theme from the first church (primary church)
-        final church = churches.first;
-        _currentTheme = ChurchTheme.fromValue(church.theme);
-        notifyListeners();
-      }
+    try {
+      final church = await _churchService.getChurchById(churchId);
+      _currentTheme = ChurchTheme.fromValue(church.theme);
+      notifyListeners();
+      debugPrint('Loaded theme for church: ${church.name} - ${church.theme}');
     } catch (e) {
       // If error, keep default theme
       debugPrint('Error loading church theme: $e');

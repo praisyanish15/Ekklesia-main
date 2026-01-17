@@ -14,6 +14,7 @@ CREATE TABLE public.profiles (
   phone_number TEXT,
   address TEXT,
   photo_url TEXT,
+  church_id UUID,
   role TEXT DEFAULT 'member' CHECK (role IN ('member', 'admin', 'commander')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -35,6 +36,12 @@ CREATE TABLE public.churches (
   email TEXT,
   description TEXT,
   photo_url TEXT,
+  theme TEXT DEFAULT 'spiritual_blue',
+  latitude DOUBLE PRECISION,
+  longitude DOUBLE PRECISION,
+  payment_qr_code_url TEXT,
+  upi_id TEXT,
+  razorpay_key_id TEXT,
   created_by UUID REFERENCES profiles(id),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

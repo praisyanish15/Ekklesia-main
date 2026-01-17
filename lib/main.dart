@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'services/supabase_service.dart';
 import 'services/notification_service.dart';
+import 'services/ad_service.dart';
 import 'providers/auth_provider.dart';
 import 'providers/bible_provider.dart';
 import 'providers/theme_provider.dart';
@@ -12,6 +13,10 @@ import 'screens/home/home_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/church/create_church_screen.dart';
 import 'screens/church/join_church_screen.dart';
+import 'screens/church/church_search_screen.dart';
+import 'screens/bible/bible_screen.dart';
+import 'screens/notifications/notifications_screen.dart';
+import 'screens/donations/donations_screen.dart';
 import 'screens/testimony/testimony_vault_screen.dart';
 
 void main() async {
@@ -22,6 +27,9 @@ void main() async {
 
   // Initialize Notifications
   await NotificationService.initialize();
+
+  // Initialize Ads
+  await AdService().initialize();
 
   runApp(const MyApp());
 }
@@ -55,6 +63,10 @@ class MyApp extends StatelessWidget {
             '/profile': (context) => const ProfileScreen(),
             '/create-church': (context) => const CreateChurchScreen(),
             '/join-church': (context) => const JoinChurchScreen(),
+            '/church-search': (context) => const ChurchSearchScreen(),
+            '/bible': (context) => const BibleScreen(),
+            '/notifications': (context) => const NotificationsScreen(),
+            '/donations': (context) => const DonationsScreen(),
             '/testimony-vault': (context) => const TestimonyVaultScreen(),
           },
         ),
@@ -85,9 +97,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
       await authProvider.initialize();
 
-      // Load church theme if user is authenticated
+      // Load church theme if user is authenticated and has joined a church
       if (authProvider.isAuthenticated && authProvider.currentUser != null) {
-        await themeProvider.loadChurchTheme(authProvider.currentUser!.id);
+        await themeProvider.loadChurchTheme(authProvider.currentUser!.churchId);
       }
     });
   }

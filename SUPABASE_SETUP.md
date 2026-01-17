@@ -1,5 +1,24 @@
 # Supabase Setup Instructions
 
+## Update Existing Database Tables (IMPORTANT)
+
+If you already have an existing database, you need to add new columns for themes and payment features. Run these ALTER TABLE commands in your Supabase SQL Editor:
+
+```sql
+-- Add theme column to churches table
+ALTER TABLE public.churches
+ADD COLUMN IF NOT EXISTS theme TEXT DEFAULT 'spiritual_blue',
+ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION,
+ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION,
+ADD COLUMN IF NOT EXISTS payment_qr_code_url TEXT,
+ADD COLUMN IF NOT EXISTS upi_id TEXT,
+ADD COLUMN IF NOT EXISTS razorpay_key_id TEXT;
+
+-- Add church_id to profiles table (if not exists)
+ALTER TABLE public.profiles
+ADD COLUMN IF NOT EXISTS church_id UUID;
+```
+
 ## Disable Email Confirmation (IMPORTANT)
 
 To allow users to sign in without email verification, follow these steps:
