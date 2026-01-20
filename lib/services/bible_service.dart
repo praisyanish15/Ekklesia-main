@@ -12,32 +12,64 @@ class BibleService {
     String version = 'KJV',
   }) async {
     try {
-      // Try to fetch from API first
-      final url = 'https://bible-api.com/$book+$chapter?translation=$version';
-      final response = await http.get(Uri.parse(url));
+      // Format book name for API (replace spaces with +)
+      final formattedBook = book.replaceAll(' ', '+');
+
+      // Try KJV API first
+      final url = 'https://bible-api.com/$formattedBook+$chapter';
+      print('Fetching from: $url');
+
+      final response = await http.get(Uri.parse(url)).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('Request timed out. Please check your internet connection.');
+        },
+      );
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body.substring(0, response.body.length > 200 ? 200 : response.body.length)}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final verses = <BibleVerse>[];
 
-        if (data['verses'] != null) {
+        if (data['verses'] != null && data['verses'] is List) {
           for (var verse in data['verses']) {
             verses.add(BibleVerse(
               book: book,
               chapter: chapter,
               verse: verse['verse'] as int,
-              text: verse['text'] as String,
-              version: version,
+              text: (verse['text'] as String).trim(),
+              version: 'KJV', // bible-api.com uses KJV
             ));
           }
+        } else if (data['text'] != null) {
+          // Alternative format - single text with all verses
+          final text = data['text'] as String;
+          verses.add(BibleVerse(
+            book: book,
+            chapter: chapter,
+            verse: 1,
+            text: text,
+            version: 'KJV',
+          ));
+        }
+
+        if (verses.isEmpty) {
+          throw Exception('No verses found for $book chapter $chapter');
         }
 
         return verses;
+      } else if (response.statusCode == 404) {
+        throw Exception('Book "$book" chapter $chapter not found. Please check the book name and chapter number.');
       } else {
-        throw Exception('Failed to fetch verses from API');
+        throw Exception('Failed to fetch verses (Status: ${response.statusCode})');
       }
     } catch (e) {
-      throw Exception('Failed to fetch verses: ${e.toString()}');
+      if (e.toString().contains('SocketException') || e.toString().contains('Failed host lookup')) {
+        throw Exception('No internet connection. Please check your network and try again.');
+      }
+      throw Exception('Error: ${e.toString()}');
     }
   }
 
