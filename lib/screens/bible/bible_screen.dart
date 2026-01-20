@@ -77,9 +77,11 @@ class _BibleScreenState extends State<BibleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
         children: [
           // Search Bar
           Row(
@@ -203,6 +205,9 @@ class _BibleContent extends StatelessWidget {
             isDarkMode: settings.isDarkMode,
           );
         },
+      ),
+          ),
+        ),
       ),
     );
   }
