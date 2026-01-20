@@ -18,9 +18,13 @@ class ThemeProvider with ChangeNotifier {
 
     try {
       final church = await _churchService.getChurchById(churchId);
-      _currentTheme = ChurchTheme.fromValue(church.theme);
-      notifyListeners();
-      debugPrint('Loaded theme for church: ${church.name} - ${church.theme}');
+      if (church != null) {
+        _currentTheme = ChurchTheme.fromValue(church.theme);
+        notifyListeners();
+        debugPrint('Loaded theme for church: ${church.name} - ${church.theme}');
+      } else {
+        debugPrint('Church not found for ID: $churchId');
+      }
     } catch (e) {
       // If error, keep default theme
       debugPrint('Error loading church theme: $e');
