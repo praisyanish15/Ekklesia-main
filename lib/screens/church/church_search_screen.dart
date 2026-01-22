@@ -94,13 +94,18 @@ class _ChurchSearchScreenState extends State<ChurchSearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Search Fields
-          TextField(
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Find Church'),
+        automaticallyImplyLeading: false,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Search Fields
+            TextField(
             controller: _nameController,
             decoration: InputDecoration(
               labelText: 'Church Name',
@@ -174,8 +179,9 @@ class _ChurchSearchScreenState extends State<ChurchSearchScreen> {
                           textAlign: TextAlign.center,
                         ),
                       ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,10 +1,15 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/image_helper.dart';
 import '../../utils/validators.dart';
 import '../../constants/app_constants.dart';
+import '../../services/church_service.dart';
+import '../../models/church_model.dart';
+import '../church/church_info_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -15,6 +20,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
+  final ChurchService _churchService = ChurchService();
   late TextEditingController _nameController;
   late TextEditingController _ageController;
   late TextEditingController _addressController;
@@ -22,6 +28,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _selectedGender;
   File? _selectedImage;
   bool _isEditing = false;
+  List<ChurchModel> _createdChurches = [];
+  bool _isLoadingChurches = false;
 
   @override
   void initState() {
@@ -32,6 +40,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _addressController = TextEditingController(text: user?.address ?? '');
     _phoneController = TextEditingController(text: user?.phoneNumber ?? '');
     _selectedGender = user?.gender;
+    _loadCreatedChurches();
+  }
+
+  Future<void> _loadCreatedChurches() async {
+    final user = context.read<AuthProvider>().currentUser;
+    if (user == null) return;
+
+    setState(() => _isLoadingChurches = true);
+
+    try {
+      final churches = await _churchService.getChurchesCreatedByUser(user.id);
+      if (mounted) {
+        setState(() {
+          _createdChurches = churches;
+          _isLoadingChurches = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingChurches = false);
+      }
+    }
   }
 
   @override
@@ -44,10 +74,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _pickImage() async {
+    // Capture context-dependent references before async operations
+    final authProvider = context.read<AuthProvider>();
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
     try {
       final image = await showDialog<File>(
         context: context,
-        builder: (context) => AlertDialog(
+        builder: (dialogContext) => AlertDialog(
           title: const Text('Select Photo'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -56,16 +90,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 leading: const Icon(Icons.photo_library),
                 title: const Text('Choose from Gallery'),
                 onTap: () async {
+                  final navigator = Navigator.of(dialogContext);
                   final img = await ImageHelper.pickImageFromGallery();
-                  if (mounted) Navigator.pop(context, img);
+                  navigator.pop(img);
                 },
               ),
               ListTile(
                 leading: const Icon(Icons.camera_alt),
                 title: const Text('Take a Photo'),
                 onTap: () async {
+                  final navigator = Navigator.of(dialogContext);
                   final img = await ImageHelper.pickImageFromCamera();
-                  if (mounted) Navigator.pop(context, img);
+                  navigator.pop(img);
                 },
               ),
             ],
@@ -79,18 +115,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
 
         // Upload immediately
-        final authProvider = context.read<AuthProvider>();
         final success = await authProvider.uploadProfilePhoto(image);
 
         if (success && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          scaffoldMessenger.showSnackBar(
             const SnackBar(
               content: Text('Profile photo updated successfully'),
               backgroundColor: Colors.green,
             ),
           );
         } else if (authProvider.errorMessage != null && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          scaffoldMessenger.showSnackBar(
             SnackBar(
               content: Text(authProvider.errorMessage!),
               backgroundColor: Colors.red,
@@ -257,7 +292,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   // Gender Field
                   DropdownButtonFormField<String>(
-                    value: _selectedGender,
+                    initialValue: _selectedGender,
                     decoration: const InputDecoration(
                       labelText: 'Gender',
                       border: OutlineInputBorder(),
@@ -336,11 +371,301 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ],
                     ),
+
+                  // Churches Created By You Section
+                  if (!_isEditing) ...[
+                    const SizedBox(height: 32),
+                    const Divider(),
+                    const SizedBox(height: 16),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Churches Created By You',
+                        style: GoogleFonts.cormorantGaramond(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    if (_isLoadingChurches)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(20.0),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    else if (_createdChurches.isEmpty)
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(20.0),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.church_outlined,
+                                size: 48,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'You haven\'t created any churches yet',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              OutlinedButton.icon(
+                                onPressed: () {
+                                  Navigator.of(context).pushNamed('/create-church');
+                                },
+                                icon: const Icon(Icons.add),
+                                label: const Text('Create Church'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _createdChurches.length,
+                        itemBuilder: (context, index) {
+                          final church = _createdChurches[index];
+                          return _CreatedChurchCard(
+                            church: church,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ChurchInfoScreen(
+                                    church: church,
+                                    isAdmin: true,
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                  ],
                 ],
               ),
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _CreatedChurchCard extends StatelessWidget {
+  final ChurchModel church;
+  final VoidCallback onTap;
+
+  const _CreatedChurchCard({
+    required this.church,
+    required this.onTap,
+  });
+
+  Future<void> _copyReferralCode(BuildContext context) async {
+    final appUrl = 'https://ekklesia.app'; // Replace with your actual app URL
+    final textToCopy = '''Join ${church.name} on Ekklesia!
+
+Referral Code: ${church.referralCode}
+
+Download the app: $appUrl''';
+
+    await Clipboard.setData(ClipboardData(text: textToCopy));
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Referral code and app link copied to clipboard!'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      elevation: 2,
+      child: Column(
+        children: [
+          // Church Info Header
+          ListTile(
+            leading: CircleAvatar(
+              radius: 25,
+              backgroundImage: church.photoUrl != null
+                  ? NetworkImage(church.photoUrl!)
+                  : null,
+              child: church.photoUrl == null
+                  ? const Icon(Icons.church, size: 28)
+                  : null,
+            ),
+            title: Text(
+              church.name,
+              style: GoogleFonts.cormorantGaramond(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            subtitle: Text(
+              church.area,
+              style: GoogleFonts.inter(fontSize: 13),
+            ),
+            trailing: IconButton(
+              icon: const Icon(Icons.arrow_forward_ios, size: 16),
+              onPressed: onTap,
+            ),
+            onTap: onTap,
+          ),
+
+          const Divider(height: 1),
+
+          // Church Details
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                // Pastor Name
+                if (church.pastorName != null)
+                  _DetailRow(
+                    icon: Icons.person,
+                    label: 'Pastor',
+                    value: church.pastorName!,
+                  ),
+
+                // Members count or location
+                if (church.city != null)
+                  _DetailRow(
+                    icon: Icons.location_on,
+                    label: 'Location',
+                    value: '${church.city}${church.state != null ? ', ${church.state}' : ''}',
+                  ),
+
+                const SizedBox(height: 12),
+
+                // Referral Code Section
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.qr_code,
+                            color: theme.colorScheme.primary,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Referral Code',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              church.referralCode,
+                              style: GoogleFonts.robotoMono(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 4,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                          ElevatedButton.icon(
+                            onPressed: () => _copyReferralCode(context),
+                            icon: const Icon(Icons.copy, size: 18),
+                            label: const Text('Copy'),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Share this code to invite members to your church',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          color: theme.textTheme.bodySmall?.color,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _DetailRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: Colors.grey[600]),
+          const SizedBox(width: 8),
+          Text(
+            '$label: ',
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey[600],
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

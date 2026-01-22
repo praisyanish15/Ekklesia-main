@@ -114,7 +114,7 @@ class _CommitteeMembersScreenState extends State<CommitteeMembersScreen> {
                             Icon(
                               Icons.groups_outlined,
                               size: 64,
-                              color: theme.colorScheme.primary.withOpacity(0.5),
+                              color: theme.colorScheme.primary.withValues(alpha: 0.5),
                             ),
                             const SizedBox(height: 16),
                             Text(
@@ -262,7 +262,7 @@ class _CommitteeMemberCard extends StatelessWidget {
                 // Photo
                 CircleAvatar(
                   radius: 32,
-                  backgroundColor: theme.colorScheme.primary.withOpacity(0.2),
+                  backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.2),
                   backgroundImage: member.photoUrl != null
                       ? NetworkImage(member.photoUrl!)
                       : null,

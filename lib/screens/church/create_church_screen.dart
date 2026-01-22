@@ -276,7 +276,7 @@ class _CreateChurchScreenState extends State<CreateChurchScreen> {
                           decoration: BoxDecoration(
                             color: ChurchTheme.fromValue(_selectedTheme)
                                 .primaryColor
-                                .withOpacity(0.1),
+                                .withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(

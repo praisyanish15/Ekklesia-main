@@ -246,7 +246,7 @@ class _SubmitTestimonyScreenState extends State<SubmitTestimonyScreen> {
 
               // Category
               DropdownButtonFormField<TestimonyCategory>(
-                value: _selectedCategory,
+                initialValue: _selectedCategory,
                 decoration: const InputDecoration(
                   labelText: 'Category *',
                   border: OutlineInputBorder(),

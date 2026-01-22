@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 enum ChurchThemeType {
   ekklesiaLight,
   ekklesiaDark,
+  ekklesiaNavy,
   spiritualBlue,
   holyPurple,
   graceGreen,
@@ -45,6 +46,8 @@ class ChurchTheme {
         return 'ekklesia_light';
       case ChurchThemeType.ekklesiaDark:
         return 'ekklesia_dark';
+      case ChurchThemeType.ekklesiaNavy:
+        return 'ekklesia_navy';
       case ChurchThemeType.spiritualBlue:
         return 'spiritual_blue';
       case ChurchThemeType.holyPurple:
@@ -65,6 +68,8 @@ class ChurchTheme {
         return ChurchThemes.ekklesiaLight;
       case 'ekklesia_dark':
         return ChurchThemes.ekklesiaDark;
+      case 'ekklesia_navy':
+        return ChurchThemes.ekklesiaNavy;
       case 'ekklesia_gold': // Legacy support
         return ChurchThemes.ekklesiaDark;
       case 'spiritual_blue':
@@ -105,7 +110,7 @@ class ChurchTheme {
       cardTheme: CardThemeData(
         color: cardColor,
         elevation: brightness == Brightness.light ? 0 : 2,
-        shadowColor: Colors.black.withOpacity(0.05),
+        shadowColor: Colors.black.withValues(alpha: 0.05),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: brightness == Brightness.light
@@ -136,7 +141,7 @@ class ChurchTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryColor,
-          foregroundColor: brightness == Brightness.light ? const Color(0xFF0B1929) : Colors.white,
+          foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -210,17 +215,17 @@ class ChurchTheme {
 }
 
 class ChurchThemes {
-  // 0. Ekklesia Light - Light mode with Off-White background and Soft Gold accents
+  // 0. Ekklesia Light - Light mode with Off-White background, Navy and Gold accents
   static const ekklesiaLight = ChurchTheme(
     type: ChurchThemeType.ekklesiaLight,
     name: 'Ekklesia Light',
-    description: 'Off-White with Soft Gold accents - clean and reverent',
-    primaryColor: Color(0xFFD4A574), // Soft Gold
-    secondaryColor: Color(0xFFE8B88B), // Light Soft Gold
-    accentColor: Color(0xFFB8956A), // Darker Soft Gold
+    description: 'Off-White with Navy and Gold accents - clean and reverent',
+    primaryColor: Color(0xFF1E3A5F), // Navy Blue
+    secondaryColor: Color(0xFFD4A574), // Soft Gold
+    accentColor: Color(0xFF2C4A6E), // Light Navy
     backgroundColor: Color(0xFFF5F5F0), // Off-White
     cardColor: Color(0xFFFFFFFF), // White cards
-    textColor: Color(0xFF2D3748), // Charcoal
+    textColor: Color(0xFF1E3A5F), // Navy for text
     subtitleColor: Color(0xFF64748B), // Slate Gray
     brightness: Brightness.light,
   );
@@ -231,13 +236,28 @@ class ChurchThemes {
     name: 'Ekklesia Dark',
     description: 'Midnight Blue with Soft Gold glow - contemplative and sacred',
     primaryColor: Color(0xFFD4A574), // Soft Gold
-    secondaryColor: Color(0xFFE8B88B), // Light Soft Gold
+    secondaryColor: Color(0xFF1E3A5F), // Navy Blue
     accentColor: Color(0xFFB8956A), // Darker Soft Gold
     backgroundColor: Color(0xFF0B1929), // Midnight Blue
     cardColor: Color(0xFF14233B), // Darker card for dark mode
     textColor: Color(0xFFF5F5F0), // Off-White
     subtitleColor: Color(0xFF94A3B8), // Slate Gray
     brightness: Brightness.dark,
+  );
+
+  // 2. Ekklesia Navy - Navy themed with gold accents
+  static const ekklesiaNavy = ChurchTheme(
+    type: ChurchThemeType.ekklesiaNavy,
+    name: 'Ekklesia Navy',
+    description: 'Classic Navy with Gold accents - timeless and elegant',
+    primaryColor: Color(0xFF1E3A5F), // Navy Blue
+    secondaryColor: Color(0xFFD4A574), // Soft Gold
+    accentColor: Color(0xFFB8956A), // Darker Soft Gold
+    backgroundColor: Color(0xFFF8F9FC), // Slight blue-tinted white
+    cardColor: Color(0xFFFFFFFF), // White cards
+    textColor: Color(0xFF1E3A5F), // Navy for text
+    subtitleColor: Color(0xFF5A6A7A), // Navy-tinted gray
+    brightness: Brightness.light,
   );
 
   // 1. Spiritual Blue - Calm and peaceful, like the sky and water
@@ -318,6 +338,7 @@ class ChurchThemes {
   static List<ChurchTheme> get all => [
         ekklesiaLight,
         ekklesiaDark,
+        ekklesiaNavy,
         spiritualBlue,
         holyPurple,
         graceGreen,

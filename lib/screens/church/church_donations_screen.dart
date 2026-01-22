@@ -131,8 +131,8 @@ class _ChurchDonationsScreenState extends State<ChurchDonationsScreen> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    theme.colorScheme.primary.withOpacity(0.1),
-                    theme.colorScheme.primary.withOpacity(0.05),
+                    theme.colorScheme.primary.withValues(alpha: 0.1),
+                    theme.colorScheme.primary.withValues(alpha: 0.05),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(16),
@@ -183,7 +183,7 @@ class _ChurchDonationsScreenState extends State<ChurchDonationsScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: theme.colorScheme.primary.withOpacity(0.3),
+                              color: theme.colorScheme.primary.withValues(alpha: 0.3),
                               width: 2,
                             ),
                           ),
@@ -205,7 +205,7 @@ class _ChurchDonationsScreenState extends State<ChurchDonationsScreen> {
                               vertical: 12,
                             ),
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withOpacity(0.1),
+                              color: theme.colorScheme.primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
@@ -295,7 +295,7 @@ class _ChurchDonationsScreenState extends State<ChurchDonationsScreen> {
                       Icon(
                         Icons.payment_outlined,
                         size: 64,
-                        color: theme.colorScheme.primary.withOpacity(0.5),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.5),
                       ),
                       const SizedBox(height: 16),
                       Text(

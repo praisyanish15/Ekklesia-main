@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+
 import '../../providers/bible_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../constants/app_constants.dart';
@@ -20,7 +21,9 @@ class _BibleScreenState extends State<BibleScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<BibleProvider>().loadSettings();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<BibleProvider>().loadSettings();
+    });
   }
 
   @override
@@ -32,16 +35,14 @@ class _BibleScreenState extends State<BibleScreen> {
   void _showSettings() {
     showModalBottomSheet(
       context: context,
-      builder: (context) => const _BibleSettingsSheet(),
+      builder: (_) => const _BibleSettingsSheet(),
     );
   }
 
   void _showBookmarks() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const _BookmarksScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const _BookmarksScreen()),
     );
   }
 
@@ -49,24 +50,13 @@ class _BibleScreenState extends State<BibleScreen> {
     final query = _searchController.text.trim();
     if (query.isEmpty) return;
 
-    // Parse reference (e.g., "John 3:16" or "Genesis 1:1")
     final parts = query.split(' ');
-    if (parts.length < 2) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid reference (e.g., John 3:16)'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
+    if (parts.length < 2) return;
 
     final book = parts.sublist(0, parts.length - 1).join(' ');
     final chapterVerse = parts.last.split(':');
+    final chapter = int.tryParse(chapterVerse.first);
 
-    if (chapterVerse.isEmpty) return;
-
-    final chapter = int.tryParse(chapterVerse[0]);
     if (chapter == null) return;
 
     context.read<BibleProvider>().fetchVerses(
@@ -80,102 +70,78 @@ class _BibleScreenState extends State<BibleScreen> {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16),
           child: Column(
-        children: [
-          // Search Bar
-          Row(
             children: [
-              Expanded(
-                child: TextField(
-                  controller: _searchController,
-                  decoration: const InputDecoration(
-                    hintText: 'Search (e.g., John 3:16)',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.search),
-                  ),
-                  onSubmitted: (_) => _searchReference(),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.menu_book),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const BibleBooksScreen(),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: const InputDecoration(
+                        hintText: 'Search (e.g., John 3:16)',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                      onSubmitted: (_) => _searchReference(),
                     ),
-                  );
-                },
-                tooltip: 'Browse Books',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.menu_book),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const BibleBooksScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.bookmark),
+                    onPressed: _showBookmarks,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.settings),
+                    onPressed: _showSettings,
+                  ),
+                ],
               ),
-              IconButton(
-                icon: const Icon(Icons.bookmark),
-                onPressed: _showBookmarks,
-                tooltip: 'Bookmarks',
-              ),
-              IconButton(
-                icon: const Icon(Icons.settings),
-                onPressed: _showSettings,
-                tooltip: 'Settings',
+              const SizedBox(height: 16),
+              Expanded(
+                child: Consumer<BibleProvider>(
+                  builder: (_, bibleProvider, __) {
+                    if (bibleProvider.isLoading) {
+                      return const Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    }
+
+                    if (bibleProvider.currentVerses.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'Search for a Bible verse\n(e.g., John 3:16)',
+                          textAlign: TextAlign.center,
+                        ),
+                      );
+                    }
+
+                    return _BibleContent(
+                      verses: bibleProvider.currentVerses,
+                      settings: bibleProvider.settings,
+                    );
+                  },
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-
-          // Bible Content
-          Expanded(
-            child: Consumer<BibleProvider>(
-              builder: (context, bibleProvider, child) {
-                if (bibleProvider.isLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                if (bibleProvider.errorMessage != null) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.error, size: 48, color: Colors.red),
-                        const SizedBox(height: 16),
-                        Text(
-                          bibleProvider.errorMessage!,
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                if (bibleProvider.currentVerses.isEmpty) {
-                  return const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.book, size: 64, color: Colors.grey),
-                        SizedBox(height: 16),
-                        Text(
-                          'Search for a Bible verse\ne.g., John 3:16',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return _BibleContent(
-                  verses: bibleProvider.currentVerses,
-                  settings: bibleProvider.settings,
-                );
-              },
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
+
+/* ---------------- Bible Content ---------------- */
 
 class _BibleContent extends StatelessWidget {
   final List<BibleVerse> verses;
@@ -192,12 +158,12 @@ class _BibleContent extends StatelessWidget {
       decoration: BoxDecoration(
         color: settings.isDarkMode ? Colors.grey[900] : Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: Colors.grey),
       ),
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: verses.length,
-        itemBuilder: (context, index) {
+        itemBuilder: (_, index) {
           final verse = verses[index];
           return _VerseItem(
             verse: verse,
@@ -206,12 +172,11 @@ class _BibleContent extends StatelessWidget {
           );
         },
       ),
-          ),
-        ),
-      ),
     );
   }
 }
+
+/* ---------------- Verse Item ---------------- */
 
 class _VerseItem extends StatelessWidget {
   final BibleVerse verse;
@@ -224,35 +189,27 @@ class _VerseItem extends StatelessWidget {
     required this.isDarkMode,
   });
 
-  void _showVerseOptions(BuildContext context) {
+  void _showOptions(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      builder: (context) => Wrap(
+      builder: (_) => Wrap(
         children: [
           ListTile(
             leading: const Icon(Icons.bookmark_add),
             title: const Text('Bookmark'),
             onTap: () async {
-              Navigator.pop(context);
-              final authProvider = context.read<AuthProvider>();
-              final bibleProvider = context.read<BibleProvider>();
+              final auth = context.read<AuthProvider>();
+              final bible = context.read<BibleProvider>();
 
-              if (authProvider.currentUser != null) {
-                final success = await bibleProvider.addBookmark(
-                  userId: authProvider.currentUser!.id,
+              Navigator.pop(context);
+
+              if (auth.currentUser != null) {
+                await bible.addBookmark(
+                  userId: auth.currentUser!.id,
                   book: verse.book,
                   chapter: verse.chapter,
                   verse: verse.verse,
                 );
-
-                if (success && context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Bookmark added'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                }
               }
             },
           ),
@@ -262,8 +219,7 @@ class _VerseItem extends StatelessWidget {
             onTap: () {
               Navigator.pop(context);
               Share.share(
-                '${verse.reference}\n\n${verse.text}\n\n- ${verse.version}',
-                subject: verse.reference,
+                '${verse.reference}\n\n${verse.text}',
               );
             },
           ),
@@ -275,23 +231,20 @@ class _VerseItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () => _showVerseOptions(context),
+      onTap: () => _showOptions(context),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         child: RichText(
           text: TextSpan(
             style: TextStyle(
               fontSize: fontSize,
-              color: isDarkMode ? Colors.white : Colors.black87,
+              color: isDarkMode ? Colors.white : Colors.black,
               height: 1.6,
             ),
             children: [
               TextSpan(
                 text: '${verse.verse} ',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: isDarkMode ? Colors.blue[300] : Colors.blue[700],
-                ),
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               TextSpan(text: verse.text),
             ],
@@ -302,78 +255,56 @@ class _VerseItem extends StatelessWidget {
   }
 }
 
+/* ---------------- Settings ---------------- */
+
 class _BibleSettingsSheet extends StatelessWidget {
-  const _BibleSettingsSheet();
+  const _BibleSettingsSheet({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Consumer<BibleProvider>(
-      builder: (context, bibleProvider, child) {
+      builder: (_, bibleProvider, __) {
         return Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
                 'Bible Settings',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 24),
-
-              // Version Selection
-              const Text('Bible Version'),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: bibleProvider.settings.version,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                ),
+                initialValue: bibleProvider.settings.version,
                 items: AppConstants.bibleVersions
-                    .map((version) => DropdownMenuItem(
-                          value: version,
-                          child: Text(version),
-                        ))
+                    .map(
+                      (v) => DropdownMenuItem(
+                        value: v,
+                        child: Text(v),
+                      ),
+                    )
                     .toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    bibleProvider.updateSettings(version: value);
+                onChanged: (v) {
+                  if (v != null) {
+                    bibleProvider.updateSettings(version: v);
                   }
                 },
               ),
-              const SizedBox(height: 16),
-
-              // Font Size
-              const Text('Font Size'),
-              Row(
-                children: [
-                  Expanded(
-                    child: Slider(
-                      value: bibleProvider.settings.fontSize,
-                      min: AppConstants.minFontSize,
-                      max: AppConstants.maxFontSize,
-                      divisions: 18,
-                      label: bibleProvider.settings.fontSize.round().toString(),
-                      onChanged: (value) {
-                        bibleProvider.updateSettings(fontSize: value);
-                      },
-                    ),
-                  ),
-                  Text('${bibleProvider.settings.fontSize.round()}'),
-                ],
+              Slider(
+                value: bibleProvider.settings.fontSize,
+                min: AppConstants.minFontSize,
+                max: AppConstants.maxFontSize,
+                onChanged: (v) {
+                  bibleProvider.updateSettings(fontSize: v);
+                },
               ),
-              const SizedBox(height: 16),
-
-              // Theme Toggle
               SwitchListTile(
                 title: const Text('Dark Mode'),
                 value: bibleProvider.settings.isDarkMode,
-                onChanged: (value) {
-                  bibleProvider.updateSettings(isDarkMode: value);
+                onChanged: (v) {
+                  bibleProvider.updateSettings(isDarkMode: v);
                 },
-                contentPadding: EdgeInsets.zero,
               ),
-              const SizedBox(height: 16),
             ],
           ),
         );
@@ -381,6 +312,8 @@ class _BibleSettingsSheet extends StatelessWidget {
     );
   }
 }
+
+/* ---------------- Bookmarks ---------------- */
 
 class _BookmarksScreen extends StatefulWidget {
   const _BookmarksScreen();
@@ -393,65 +326,32 @@ class _BookmarksScreenState extends State<_BookmarksScreen> {
   @override
   void initState() {
     super.initState();
-    final authProvider = context.read<AuthProvider>();
-    final bibleProvider = context.read<BibleProvider>();
-    if (authProvider.currentUser != null) {
-      bibleProvider.loadBookmarks(authProvider.currentUser!.id);
+    final auth = context.read<AuthProvider>();
+    if (auth.currentUser != null) {
+      context.read<BibleProvider>().loadBookmarks(auth.currentUser!.id);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Bookmarks'),
-      ),
+      appBar: AppBar(title: const Text('Bookmarks')),
       body: Consumer<BibleProvider>(
-        builder: (context, bibleProvider, child) {
-          if (bibleProvider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
+        builder: (_, bibleProvider, __) {
           if (bibleProvider.bookmarks.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.bookmark_border, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text(
-                    'No bookmarks yet',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ],
-              ),
-            );
+            return const Center(child: Text('No bookmarks'));
           }
 
           return ListView.builder(
             itemCount: bibleProvider.bookmarks.length,
-            itemBuilder: (context, index) {
-              final bookmark = bibleProvider.bookmarks[index];
+            itemBuilder: (_, i) {
+              final b = bibleProvider.bookmarks[i];
               return ListTile(
-                leading: const Icon(Icons.bookmark),
-                title: Text(bookmark.reference),
-                subtitle: bookmark.note != null ? Text(bookmark.note!) : null,
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () async {
-                    final authProvider = context.read<AuthProvider>();
-                    if (authProvider.currentUser != null) {
-                      await bibleProvider.removeBookmark(
-                        bookmark.id,
-                        authProvider.currentUser!.id,
-                      );
-                    }
-                  },
-                ),
+                title: Text(b.reference),
                 onTap: () {
                   bibleProvider.fetchVerses(
-                    book: bookmark.book,
-                    chapter: bookmark.chapter,
+                    book: b.book,
+                    chapter: b.chapter,
                   );
                   Navigator.pop(context);
                 },

@@ -144,7 +144,7 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
           children: [
             // Info Card
             Card(
-              color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
@@ -176,12 +176,12 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
               width: 300,
               height: 300,
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: _isFaceDetected
                       ? Colors.green
-                      : theme.colorScheme.primary.withOpacity(0.3),
+                      : theme.colorScheme.primary.withValues(alpha: 0.3),
                   width: 3,
                 ),
               ),
@@ -199,7 +199,7 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
                         Icon(
                           Icons.face,
                           size: 100,
-                          color: theme.colorScheme.primary.withOpacity(0.5),
+                          color: theme.colorScheme.primary.withValues(alpha: 0.5),
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -221,10 +221,10 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: _isFaceDetected
-                      ? Colors.green.withOpacity(0.1)
+                      ? Colors.green.withValues(alpha: 0.1)
                       : (_message.contains('Error') || _message.contains('No face'))
-                          ? Colors.red.withOpacity(0.1)
-                          : Colors.blue.withOpacity(0.1),
+                          ? Colors.red.withValues(alpha: 0.1)
+                          : Colors.blue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: _isFaceDetected

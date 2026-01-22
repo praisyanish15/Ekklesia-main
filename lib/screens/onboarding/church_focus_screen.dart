@@ -263,7 +263,7 @@ class _FocusCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: isSelected ? iconColor.withOpacity(0.1) : Colors.white,
+          color: isSelected ? iconColor.withValues(alpha: 0.1) : Colors.white,
           border: Border.all(
             color: isSelected ? iconColor : Colors.grey[300]!,
             width: isSelected ? 2 : 1,
@@ -272,7 +272,7 @@ class _FocusCard extends StatelessWidget {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: iconColor.withOpacity(0.2),
+                    color: iconColor.withValues(alpha: 0.2),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -287,7 +287,7 @@ class _FocusCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: iconColor.withOpacity(0.2),
+                    color: iconColor.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(icon, color: iconColor, size: 28),
@@ -332,7 +332,7 @@ class _FocusCard extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? iconColor.withOpacity(0.2)
+                            ? iconColor.withValues(alpha: 0.2)
                             : Colors.grey[100],
                         borderRadius: BorderRadius.circular(8),
                       ),

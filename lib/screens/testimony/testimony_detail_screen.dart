@@ -46,6 +46,7 @@ class _TestimonyDetailScreenState extends State<TestimonyDetailScreen> {
 
   Future<void> _toggleLike() async {
     final authProvider = context.read<AuthProvider>();
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
     if (authProvider.currentUser == null) return;
 
     try {
@@ -73,12 +74,14 @@ class _TestimonyDetailScreenState extends State<TestimonyDetailScreen> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString().replaceAll('Exception: ', '')),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

@@ -133,14 +133,17 @@ class AuthService {
       if (user == null) return null;
 
       final userProfile = await _supabase
-          .from('users')
+          .from('profiles')
           .select()
           .eq('id', user.id)
           .single();
 
       return UserModel.fromJson(userProfile);
     } catch (e) {
-      throw Exception('Failed to fetch user profile: ${e.toString()}');
+      // If profile fetch fails, return null instead of throwing
+      // This allows the app to handle missing profiles gracefully
+      print('Failed to fetch user profile: ${e.toString()}');
+      return null;
     }
   }
 

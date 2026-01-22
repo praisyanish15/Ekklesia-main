@@ -398,4 +398,21 @@ class ChurchService {
       throw Exception('Failed to get user churches: ${e.toString()}');
     }
   }
+
+  /// Get churches created by user
+  Future<List<ChurchModel>> getChurchesCreatedByUser(String userId) async {
+    try {
+      final response = await _supabase
+          .from('churches')
+          .select()
+          .eq('created_by', userId)
+          .order('created_at', ascending: false);
+
+      return (response as List)
+          .map((church) => ChurchModel.fromJson(church))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to get created churches: ${e.toString()}');
+    }
+  }
 }

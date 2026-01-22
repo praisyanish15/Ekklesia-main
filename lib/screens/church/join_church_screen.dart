@@ -98,8 +98,13 @@ class _JoinChurchScreenState extends State<JoinChurchScreen> {
       _isLoading = true;
     });
 
+    final authProvider = context.read<AuthProvider>();
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    final churchName = _foundChurch!.name;
+    final churchId = _foundChurch!.id;
+
     try {
-      final authProvider = context.read<AuthProvider>();
       if (authProvider.currentUser == null) {
         throw Exception('User not authenticated');
       }
@@ -112,18 +117,21 @@ class _JoinChurchScreenState extends State<JoinChurchScreen> {
         userId: authProvider.currentUser!.id,
       );
 
+      // Update the user's churchId in their profile
+      await authProvider.updateProfile(churchId: churchId);
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        scaffoldMessenger.showSnackBar(
           SnackBar(
-            content: Text('Successfully joined ${_foundChurch!.name}! Your identity has been verified.'),
+            content: Text('Successfully joined $churchName! Your identity has been verified.'),
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.of(context).pop();
+        navigator.pop(true); // Return true to indicate successful join
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        scaffoldMessenger.showSnackBar(
           SnackBar(
             content: Text(e.toString().replaceAll('Exception: ', '')),
             backgroundColor: Colors.red,

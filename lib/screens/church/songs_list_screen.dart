@@ -144,7 +144,7 @@ class _SongsListScreenState extends State<SongsListScreen> {
                       });
                       _filterSongs();
                     },
-                    selectedColor: theme.colorScheme.primary.withOpacity(0.2),
+                    selectedColor: theme.colorScheme.primary.withValues(alpha: 0.2),
                     checkmarkColor: theme.colorScheme.primary,
                   ),
                 );
@@ -202,7 +202,7 @@ class _SongsListScreenState extends State<SongsListScreen> {
                                     Icons.music_note_outlined,
                                     size: 64,
                                     color: theme.colorScheme.primary
-                                        .withOpacity(0.5),
+                                        .withValues(alpha: 0.5),
                                   ),
                                   const SizedBox(height: 16),
                                   Text(
@@ -304,7 +304,7 @@ class _SongCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withOpacity(0.1),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -340,7 +340,7 @@ class _SongCard extends StatelessWidget {
                         padding:
                             const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.1),
+                          color: theme.colorScheme.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(

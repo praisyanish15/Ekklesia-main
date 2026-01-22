@@ -17,11 +17,28 @@ class _WorshipTabState extends State<WorshipTab> {
   final ChurchService _churchService = ChurchService();
   ChurchModel? _userChurch;
   bool _isLoading = false;
+  String? _lastChurchId;
 
   @override
   void initState() {
     super.initState();
-    _loadUserChurch();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadUserChurch();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reload when user data changes (e.g., after joining a church)
+    final authProvider = context.watch<AuthProvider>();
+    final user = authProvider.currentUser;
+
+    // Reload if churchId changed (user joined a new church or left)
+    if (user?.churchId != _lastChurchId && !_isLoading) {
+      _lastChurchId = user?.churchId;
+      _loadUserChurch();
+    }
   }
 
   Future<void> _loadUserChurch() async {
@@ -29,20 +46,31 @@ class _WorshipTabState extends State<WorshipTab> {
     final user = authProvider.currentUser;
 
     if (user?.churchId == null) {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _userChurch = null;
+        });
+      }
       return;
     }
 
-    setState(() => _isLoading = true);
+    if (mounted) {
+      setState(() => _isLoading = true);
+    }
 
     try {
       final church = await _churchService.getChurchById(user!.churchId!);
-      setState(() {
-        _userChurch = church;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _userChurch = church;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -85,7 +113,7 @@ class _NoChurchView extends StatelessWidget {
             Icon(
               Icons.music_note,
               size: 100,
-              color: theme.colorScheme.primary.withOpacity(0.5),
+              color: theme.colorScheme.primary.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 24),
             Text(

@@ -71,60 +71,52 @@ class _HomeScreenState extends State<HomeScreen> {
                         ? const Icon(Icons.person, size: 20)
                         : null,
                   ),
-                  itemBuilder: (context) => [
-                    PopupMenuItem(
-                      child: const ListTile(
-                        leading: Icon(Icons.person),
-                        title: Text('Profile'),
-                        contentPadding: EdgeInsets.zero,
+                  itemBuilder: (popupContext) {
+                    final navigator = Navigator.of(popupContext);
+                    return [
+                      PopupMenuItem(
+                        child: const ListTile(
+                          leading: Icon(Icons.person),
+                          title: Text('Profile'),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        onTap: () {
+                          navigator.pushNamed('/profile');
+                        },
                       ),
-                      onTap: () {
-                        Future.delayed(Duration.zero, () {
-                          Navigator.of(context).pushNamed('/profile');
-                        });
-                      },
-                    ),
-                    PopupMenuItem(
-                      child: const ListTile(
-                        leading: Icon(Icons.group_add),
-                        title: Text('Join Church'),
-                        contentPadding: EdgeInsets.zero,
+                      PopupMenuItem(
+                        child: const ListTile(
+                          leading: Icon(Icons.group_add),
+                          title: Text('Join Church'),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        onTap: () {
+                          navigator.pushNamed('/join-church');
+                        },
                       ),
-                      onTap: () {
-                        Future.delayed(Duration.zero, () {
-                          Navigator.of(context).pushNamed('/join-church');
-                        });
-                      },
-                    ),
-                    PopupMenuItem(
-                      child: const ListTile(
-                        leading: Icon(Icons.add_business),
-                        title: Text('Create Church'),
-                        contentPadding: EdgeInsets.zero,
+                      PopupMenuItem(
+                        child: const ListTile(
+                          leading: Icon(Icons.add_business),
+                          title: Text('Create Church'),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        onTap: () {
+                          navigator.pushNamed('/create-church');
+                        },
                       ),
-                      onTap: () {
-                        Future.delayed(Duration.zero, () {
-                          Navigator.of(context).pushNamed('/create-church');
-                        });
-                      },
-                    ),
-                    PopupMenuItem(
-                      child: const ListTile(
-                        leading: Icon(Icons.logout),
-                        title: Text('Logout'),
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      onTap: () {
-                        Future.delayed(Duration.zero, () async {
+                      PopupMenuItem(
+                        child: const ListTile(
+                          leading: Icon(Icons.logout),
+                          title: Text('Logout'),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        onTap: () async {
                           await authProvider.signOut();
-                          if (context.mounted) {
-                            Navigator.of(context)
-                                .pushReplacementNamed('/login');
-                          }
-                        });
-                      },
-                    ),
-                  ],
+                          navigator.pushReplacementNamed('/login');
+                        },
+                      ),
+                    ];
+                  },
                 ),
               );
             },
@@ -338,7 +330,24 @@ class _HomeTabState extends State<HomeTab> {
                       icon: Icons.event,
                       title: 'Events',
                       onTap: () {
-                        // Navigate to events
+                        if (_userChurch != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ChurchInfoScreen(
+                                church: _userChurch!,
+                                isAdmin: user?.role == UserRole.admin,
+                              ),
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Join a church to view events'),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                        }
                       },
                     ),
                   ],
@@ -441,7 +450,7 @@ class _MyChurchCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: theme.colorScheme.primary.withOpacity(0.3),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
                         width: 2,
                       ),
                       image: church.photoUrl != null
@@ -451,7 +460,7 @@ class _MyChurchCard extends StatelessWidget {
                             )
                           : null,
                       color: church.photoUrl == null
-                          ? theme.colorScheme.primary.withOpacity(0.1)
+                          ? theme.colorScheme.primary.withValues(alpha: 0.1)
                           : null,
                     ),
                     child: church.photoUrl == null

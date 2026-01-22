@@ -112,7 +112,7 @@ class _ChurchMembersScreenState extends State<ChurchMembersScreen> {
                             Icon(
                               Icons.people_outline,
                               size: 64,
-                              color: theme.colorScheme.primary.withOpacity(0.5),
+                              color: theme.colorScheme.primary.withValues(alpha: 0.5),
                             ),
                             const SizedBox(height: 16),
                             Text(
@@ -173,7 +173,7 @@ class _MemberCard extends StatelessWidget {
       case 'committee':
         return const Color(0xFFB8956A); // Darker Soft Gold
       default:
-        return colorScheme.primary.withOpacity(0.3);
+        return colorScheme.primary.withValues(alpha: 0.3);
     }
   }
 
@@ -200,7 +200,7 @@ class _MemberCard extends StatelessWidget {
             // Avatar
             CircleAvatar(
               radius: 28,
-              backgroundColor: theme.colorScheme.primary.withOpacity(0.2),
+              backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.2),
               backgroundImage: member['photo_url'] != null
                   ? NetworkImage(member['photo_url'])
                   : null,

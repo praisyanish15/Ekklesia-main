@@ -23,7 +23,7 @@ class ChurchHeader extends StatelessWidget {
         color: theme.cardColor,
         border: Border(
           bottom: BorderSide(
-            color: theme.colorScheme.primary.withOpacity(0.1),
+            color: theme.colorScheme.primary.withValues(alpha: 0.1),
             width: 1,
           ),
         ),
@@ -38,7 +38,7 @@ class ChurchHeader extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: theme.colorScheme.primary.withOpacity(0.3),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
                   width: 2,
                 ),
                 image: DecorationImage(
@@ -53,9 +53,9 @@ class ChurchHeader extends StatelessWidget {
               height: 50,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: theme.colorScheme.primary.withOpacity(0.1),
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
                 border: Border.all(
-                  color: theme.colorScheme.primary.withOpacity(0.3),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
                   width: 2,
                 ),
               ),

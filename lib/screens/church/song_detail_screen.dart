@@ -115,7 +115,7 @@ class SongDetailScreen extends StatelessWidget {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -297,10 +297,10 @@ class SongDetailScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(20.0),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: theme.colorScheme.primary.withOpacity(0.2),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.2),
                 ),
               ),
               child: SelectableText(

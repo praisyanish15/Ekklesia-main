@@ -220,7 +220,7 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: accountType,
+                  initialValue: accountType,
                   decoration: const InputDecoration(labelText: 'Account Type'),
                   items: const [
                     DropdownMenuItem(value: 'savings', child: Text('Savings')),
@@ -377,7 +377,7 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: theme.colorScheme.primary.withOpacity(0.3),
+                            color: theme.colorScheme.primary.withValues(alpha: 0.3),
                             width: 2,
                           ),
                         ),
@@ -516,7 +516,7 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                         Icon(
                           Icons.account_balance_outlined,
                           size: 48,
-                          color: theme.colorScheme.primary.withOpacity(0.5),
+                          color: theme.colorScheme.primary.withValues(alpha: 0.5),
                         ),
                         const SizedBox(height: 16),
                         Text(

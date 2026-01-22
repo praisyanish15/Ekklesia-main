@@ -159,7 +159,7 @@ class _SubmitPrayerScreenState extends State<SubmitPrayerScreen> {
 
               // Category
               DropdownButtonFormField<PrayerCategory>(
-                value: _selectedCategory,
+                initialValue: _selectedCategory,
                 decoration: const InputDecoration(
                   labelText: 'Category *',
                   border: OutlineInputBorder(),

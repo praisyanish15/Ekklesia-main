@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../providers/auth_provider.dart';
 import '../../models/testimony_model.dart';
 import '../../services/testimony_service.dart';
 import 'submit_testimony_screen.dart';

@@ -210,7 +210,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                     // Gender Field (Optional)
                     DropdownButtonFormField<String>(
-                      value: _selectedGender,
+                      initialValue: _selectedGender,
                       decoration: const InputDecoration(
                         labelText: 'Gender',
                         border: OutlineInputBorder(),

@@ -352,13 +352,13 @@ class PrayerService {
     try {
       final activePrayers = await _supabase
           .from('prayer_requests')
-          .select('id', count: true)
+          .select('id')
           .eq('church_id', churchId)
           .eq('status', PrayerStatus.active.name);
 
       final answeredPrayers = await _supabase
           .from('prayer_requests')
-          .select('id', count: true)
+          .select('id')
           .eq('church_id', churchId)
           .eq('status', PrayerStatus.answered.name);
 

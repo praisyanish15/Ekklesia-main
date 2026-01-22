@@ -37,7 +37,7 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> {
                 end: Alignment.bottomRight,
                 colors: [
                   Theme.of(context).primaryColor,
-                  Theme.of(context).primaryColor.withOpacity(0.7),
+                  Theme.of(context).primaryColor.withValues(alpha: 0.7),
                 ],
               ),
             ),
@@ -55,7 +55,7 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> {
                 Text(
                   'Choose a theme that reflects your church\'s personality',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     fontSize: 16,
                   ),
                 ),
@@ -90,7 +90,7 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> {
                         boxShadow: isSelected
                             ? [
                                 BoxShadow(
-                                  color: theme.primaryColor.withOpacity(0.3),
+                                  color: theme.primaryColor.withValues(alpha: 0.3),
                                   blurRadius: 12,
                                   offset: const Offset(0, 4),
                                 ),
@@ -141,7 +141,7 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> {
                                   child: Icon(
                                     _getThemeIcon(theme.type),
                                     size: 48,
-                                    color: Colors.white.withOpacity(0.9),
+                                    color: Colors.white.withValues(alpha: 0.9),
                                   ),
                                 ),
                               ],
@@ -196,7 +196,7 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> {
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 10,
                   offset: const Offset(0, -2),
                 ),
@@ -258,6 +258,8 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> {
         return Icons.wb_sunny;
       case ChurchThemeType.ekklesiaDark:
         return Icons.nights_stay;
+      case ChurchThemeType.ekklesiaNavy:
+        return Icons.anchor;
       case ChurchThemeType.spiritualBlue:
         return Icons.water_drop;
       case ChurchThemeType.holyPurple:

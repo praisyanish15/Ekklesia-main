@@ -95,7 +95,7 @@ class _LandingScreenState extends State<LandingScreen>
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFD4A574).withOpacity(0.3), // Soft Gold glow
+                    color: const Color(0xFFD4A574).withValues(alpha: 0.3), // Soft Gold glow
                     blurRadius: 40,
                     spreadRadius: 10,
                   ),
@@ -208,7 +208,7 @@ class _LandingScreenState extends State<LandingScreen>
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFD4AF37).withOpacity(0.5),
+            color: const Color(0xFFD4AF37).withValues(alpha: 0.5),
             blurRadius: 20,
             spreadRadius: 2,
           ),
@@ -264,18 +264,18 @@ class _FeatureCardState extends State<_FeatureCard> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         decoration: BoxDecoration(
-          color: const Color(0xFF0F1535).withOpacity(0.6),
+          color: const Color(0xFF0F1535).withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: _isHovered
-                ? widget.gradient[0].withOpacity(0.6)
-                : const Color(0xFF1A1F3A).withOpacity(0.4),
+                ? widget.gradient[0].withValues(alpha: 0.6)
+                : const Color(0xFF1A1F3A).withValues(alpha: 0.4),
             width: 1,
           ),
           boxShadow: _isHovered
               ? [
                   BoxShadow(
-                    color: widget.gradient[0].withOpacity(0.3),
+                    color: widget.gradient[0].withValues(alpha: 0.3),
                     blurRadius: 20,
                     spreadRadius: 2,
                   ),
@@ -298,7 +298,7 @@ class _FeatureCardState extends State<_FeatureCard> {
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          widget.gradient[0].withOpacity(0.3),
+                          widget.gradient[0].withValues(alpha: 0.3),
                           Colors.transparent,
                         ],
                       ),

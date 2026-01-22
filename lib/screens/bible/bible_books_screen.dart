@@ -34,7 +34,7 @@ class BibleBooksScreen extends StatelessWidget {
                     end: Alignment.bottomRight,
                     colors: [
                       Theme.of(context).primaryColor,
-                      Theme.of(context).primaryColor.withOpacity(0.7),
+                      Theme.of(context).primaryColor.withValues(alpha: 0.7),
                     ],
                   ),
                 ),
@@ -42,7 +42,7 @@ class BibleBooksScreen extends StatelessWidget {
                   child: Icon(
                     Icons.menu_book,
                     size: 80,
-                    color: Colors.white.withOpacity(0.3),
+                    color: Colors.white.withValues(alpha: 0.3),
                   ),
                 ),
               ),
@@ -117,7 +117,7 @@ class BibleBooksScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Theme.of(context).primaryColor.withOpacity(0.1),
+        color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -172,7 +172,7 @@ class BibleBooksScreen extends StatelessWidget {
               end: Alignment.bottomRight,
               colors: [
                 Colors.white,
-                Theme.of(context).primaryColor.withOpacity(0.05),
+                Theme.of(context).primaryColor.withValues(alpha: 0.05),
               ],
             ),
           ),
@@ -185,7 +185,7 @@ class BibleBooksScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor.withOpacity(0.1),
+                      color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Icon(
@@ -270,7 +270,7 @@ class _ChapterSelectionSheet extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor.withOpacity(0.1),
+                    color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -330,10 +330,10 @@ class _ChapterSelectionSheet extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor.withOpacity(0.1),
+                      color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: Theme.of(context).primaryColor.withOpacity(0.3),
+                        color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Center(
