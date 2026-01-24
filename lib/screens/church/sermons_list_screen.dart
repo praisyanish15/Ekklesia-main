@@ -8,11 +8,13 @@ import 'sermon_detail_screen.dart';
 class SermonsListScreen extends StatefulWidget {
   final String churchId;
   final String churchName;
+  final bool embedded; // True when used as a tab (no Scaffold)
 
   const SermonsListScreen({
     super.key,
     required this.churchId,
     required this.churchName,
+    this.embedded = false,
   });
 
   @override
@@ -24,6 +26,7 @@ class _SermonsListScreenState extends State<SermonsListScreen> {
   List<Sermon> _sermons = [];
   bool _isLoading = true;
   String _errorMessage = '';
+  bool _featureComingSoon = false;
 
   @override
   void initState() {
@@ -45,16 +48,164 @@ class _SermonsListScreenState extends State<SermonsListScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-        _isLoading = false;
-      });
+      // Check if error is due to missing table (feature not yet available)
+      final errorStr = e.toString().toLowerCase();
+      // Check for various error patterns that indicate table doesn't exist
+      // PGRST205 = relation not found in PostgREST
+      final isMissingTable = errorStr.contains('pgrst205') ||
+          errorStr.contains('could not find the') ||
+          errorStr.contains('schema cache') ||
+          (errorStr.contains('relation') && errorStr.contains('does not exist'));
+
+      if (isMissingTable) {
+        // Table doesn't exist yet - show as coming soon
+        setState(() {
+          _sermons = [];
+          _isLoading = false;
+          _featureComingSoon = true;
+        });
+      } else {
+        setState(() {
+          _errorMessage = e.toString();
+          _isLoading = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    final content = _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : _featureComingSoon
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.mic,
+                        size: 80,
+                        color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Sermons Coming Soon!',
+                        style: GoogleFonts.cormorantGaramond(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'We\'re working on bringing you sermon recordings and notes. Stay tuned!',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          color: theme.textTheme.bodyMedium?.color,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      Icon(
+                        Icons.construction,
+                        size: 32,
+                        color: Colors.orange,
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            : _errorMessage.isNotEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 64,
+                            color: theme.colorScheme.error,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Error loading sermons',
+                            style: theme.textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _errorMessage,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton.icon(
+                            onPressed: _loadSermons,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : _sermons.isEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.book_outlined,
+                                size: 64,
+                                color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No sermons yet',
+                                style: theme.textTheme.titleLarge,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Sermons will appear here once they are added by church administrators',
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.bodyMedium,
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : RefreshIndicator(
+                        onRefresh: _loadSermons,
+                        child: ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: _sermons.length,
+                          itemBuilder: (context, index) {
+                            final sermon = _sermons[index];
+                            return _SermonCard(
+                              sermon: sermon,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => SermonDetailScreen(
+                                      sermon: sermon,
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      );
+
+    // When embedded in a tab, don't wrap in Scaffold
+    if (widget.embedded) {
+      return content;
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -67,91 +218,7 @@ class _SermonsListScreenState extends State<SermonsListScreen> {
         ),
         elevation: 0,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage.isNotEmpty
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 64,
-                          color: theme.colorScheme.error,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Error loading sermons',
-                          style: theme.textTheme.titleLarge,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _errorMessage,
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                        const SizedBox(height: 24),
-                        ElevatedButton.icon(
-                          onPressed: _loadSermons,
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Retry'),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              : _sermons.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.book_outlined,
-                              size: 64,
-                              color: theme.colorScheme.primary.withValues(alpha: 0.5),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No sermons yet',
-                              style: theme.textTheme.titleLarge,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Sermons will appear here once they are added by church administrators',
-                              textAlign: TextAlign.center,
-                              style: theme.textTheme.bodyMedium,
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: _loadSermons,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _sermons.length,
-                        itemBuilder: (context, index) {
-                          final sermon = _sermons[index];
-                          return _SermonCard(
-                            sermon: sermon,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => SermonDetailScreen(
-                                    sermon: sermon,
-                                  ),
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ),
+      body: content,
     );
   }
 }

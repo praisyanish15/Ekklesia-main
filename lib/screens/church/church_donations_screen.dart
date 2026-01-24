@@ -3,9 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:dio/dio.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../models/church_model.dart';
 import '../../models/bank_details_model.dart';
+import '../../models/campaign_model.dart';
 import '../../services/payment_settings_service.dart';
+import '../../services/campaign_service.dart';
+import '../../providers/auth_provider.dart';
+import 'add_campaign_screen.dart';
 
 class ChurchDonationsScreen extends StatefulWidget {
   final ChurchModel church;
@@ -21,26 +27,33 @@ class ChurchDonationsScreen extends StatefulWidget {
 
 class _ChurchDonationsScreenState extends State<ChurchDonationsScreen> {
   final PaymentSettingsService _paymentService = PaymentSettingsService();
+  final CampaignService _campaignService = CampaignService();
   List<BankDetails> _bankDetails = [];
+  List<CampaignModel> _campaigns = [];
   bool _isLoading = true;
   String _errorMessage = '';
 
   @override
   void initState() {
     super.initState();
-    _loadBankDetails();
+    _loadData();
   }
 
-  Future<void> _loadBankDetails() async {
+  Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
       _errorMessage = '';
     });
 
     try {
-      final details = await _paymentService.getChurchBankDetails(widget.church.id);
+      // Load bank details and campaigns in parallel
+      final results = await Future.wait([
+        _paymentService.getChurchBankDetails(widget.church.id),
+        _loadCampaigns(),
+      ]);
+
       setState(() {
-        _bankDetails = details;
+        _bankDetails = results[0] as List<BankDetails>;
         _isLoading = false;
       });
     } catch (e) {
@@ -49,6 +62,25 @@ class _ChurchDonationsScreenState extends State<ChurchDonationsScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  Future<void> _loadCampaigns() async {
+    try {
+      final campaigns = await _campaignService.getActiveCampaigns(widget.church.id);
+      setState(() {
+        _campaigns = campaigns;
+      });
+    } catch (e) {
+      // Silently fail if campaigns table doesn't exist yet
+      final errorStr = e.toString().toLowerCase();
+      if (!errorStr.contains('pgrst205') && !errorStr.contains('schema cache')) {
+        debugPrint('Failed to load campaigns: $e');
+      }
+    }
+  }
+
+  bool _isChurchCreator(String? userId) {
+    return userId != null && widget.church.createdBy == userId;
   }
 
   Future<void> _downloadQrCode() async {
@@ -108,6 +140,9 @@ class _ChurchDonationsScreenState extends State<ChurchDonationsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final authProvider = context.watch<AuthProvider>();
+    final currentUserId = authProvider.currentUser?.id;
+    final isCreator = _isChurchCreator(currentUserId);
 
     return Scaffold(
       appBar: AppBar(
@@ -120,6 +155,26 @@ class _ChurchDonationsScreenState extends State<ChurchDonationsScreen> {
         ),
         elevation: 0,
       ),
+      floatingActionButton: isCreator
+          ? FloatingActionButton.extended(
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AddCampaignScreen(
+                      churchId: widget.church.id,
+                      creatorId: currentUserId!,
+                    ),
+                  ),
+                );
+                if (result == true) {
+                  _loadCampaigns();
+                }
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('New Campaign'),
+            )
+          : null,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -159,7 +214,18 @@ class _ChurchDonationsScreenState extends State<ChurchDonationsScreen> {
               ),
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
+
+            // Active Campaigns Section
+            if (_campaigns.isNotEmpty) ...[
+              _SectionHeader(
+                icon: Icons.campaign,
+                title: 'Active Campaigns',
+              ),
+              const SizedBox(height: 16),
+              ..._campaigns.map((campaign) => _CampaignCard(campaign: campaign)),
+              const SizedBox(height: 24),
+            ],
 
             // QR Code Section
             if (widget.church.paymentQrCodeUrl != null) ...[
@@ -525,6 +591,162 @@ class _DetailRow extends StatelessWidget {
             constraints: const BoxConstraints(),
           ),
       ],
+    );
+  }
+}
+
+class _CampaignCard extends StatelessWidget {
+  final CampaignModel campaign;
+
+  const _CampaignCard({required this.campaign});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dateFormat = DateFormat('MMM dd, yyyy');
+    final currencyFormat = NumberFormat.currency(symbol: '\u20B9', decimalDigits: 0);
+
+    final daysLeft = campaign.endDate.difference(DateTime.now()).inDays;
+    final progress = campaign.progressPercentage.clamp(0, 100);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Title and status
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    campaign.title,
+                    style: GoogleFonts.cormorantGaramond(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: daysLeft > 7
+                        ? Colors.green.withValues(alpha: 0.1)
+                        : Colors.orange.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    daysLeft > 0 ? '$daysLeft days left' : 'Ending today',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: daysLeft > 7 ? Colors.green : Colors.orange,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // Description
+            Text(
+              campaign.description,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                color: theme.textTheme.bodyMedium?.color,
+                height: 1.4,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+
+            const SizedBox(height: 16),
+
+            // Progress bar
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: progress / 100,
+                minHeight: 8,
+                backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Amount info
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Raised',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        color: theme.textTheme.bodySmall?.color,
+                      ),
+                    ),
+                    Text(
+                      currencyFormat.format(campaign.currentAmount),
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      'Goal',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        color: theme.textTheme.bodySmall?.color,
+                      ),
+                    ),
+                    Text(
+                      currencyFormat.format(campaign.targetAmount),
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // Date range
+            Row(
+              children: [
+                Icon(
+                  Icons.calendar_today,
+                  size: 14,
+                  color: theme.textTheme.bodySmall?.color,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '${dateFormat.format(campaign.startDate)} - ${dateFormat.format(campaign.endDate)}',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: theme.textTheme.bodySmall?.color,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

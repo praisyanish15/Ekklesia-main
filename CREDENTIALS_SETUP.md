@@ -68,7 +68,7 @@ This guide will walk you through setting up Supabase and Razorpay credentials fo
 4. Verify email and phone OTP
 
 ### Step 2: Access Dashboard
-1. Login to [Razorpay Dashboard](https://dashboard.razorpay.com)
+1. Login to [Razorpay Dashboard]1
 2. Toggle to **Test Mode** (switch at top of page)
    - 🧪 Test Mode = For development (no real money)
    - 💰 Live Mode = For production (real payments)

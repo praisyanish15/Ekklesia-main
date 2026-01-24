@@ -470,21 +470,15 @@ class _CreatedChurchCard extends StatelessWidget {
   });
 
   Future<void> _copyReferralCode(BuildContext context) async {
-    final appUrl = 'https://ekklesia.app'; // Replace with your actual app URL
-    final textToCopy = '''Join ${church.name} on Ekklesia!
-
-Referral Code: ${church.referralCode}
-
-Download the app: $appUrl''';
-
-    await Clipboard.setData(ClipboardData(text: textToCopy));
+    // Copy just the referral code
+    await Clipboard.setData(ClipboardData(text: church.referralCode));
 
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Referral code and app link copied to clipboard!'),
+        SnackBar(
+          content: Text('Referral code "${church.referralCode}" copied!'),
           backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 2),
         ),
       );
     }
@@ -597,16 +591,10 @@ Download the app: $appUrl''';
                               ),
                             ),
                           ),
-                          ElevatedButton.icon(
+                          IconButton(
                             onPressed: () => _copyReferralCode(context),
-                            icon: const Icon(Icons.copy, size: 18),
-                            label: const Text('Copy'),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                            ),
+                            icon: const Icon(Icons.copy, size: 20),
+                            tooltip: 'Copy code',
                           ),
                         ],
                       ),

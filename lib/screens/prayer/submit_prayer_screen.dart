@@ -44,7 +44,7 @@ class _SubmitPrayerScreenState extends State<SubmitPrayerScreen> {
           throw Exception('User not authenticated');
         }
 
-        if (authProvider.currentUser!.currentChurchId == null) {
+        if (authProvider.currentUser!.churchId == null) {
           throw Exception('Please join a church first');
         }
 
@@ -52,7 +52,7 @@ class _SubmitPrayerScreenState extends State<SubmitPrayerScreen> {
           userId: authProvider.currentUser!.id,
           userName: authProvider.currentUser!.name,
           userPhotoUrl: authProvider.currentUser!.photoUrl,
-          churchId: authProvider.currentUser!.currentChurchId!,
+          churchId: authProvider.currentUser!.churchId!,
           title: _titleController.text.trim(),
           description: _descriptionController.text.trim(),
           category: _selectedCategory,

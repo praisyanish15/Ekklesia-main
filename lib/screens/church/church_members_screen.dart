@@ -5,11 +5,13 @@ import '../../services/church_service.dart';
 class ChurchMembersScreen extends StatefulWidget {
   final String churchId;
   final String churchName;
+  final bool embedded; // True when used as a tab (no Scaffold)
 
   const ChurchMembersScreen({
     super.key,
     required this.churchId,
     required this.churchName,
+    this.embedded = false,
   });
 
   @override
@@ -45,16 +47,107 @@ class _ChurchMembersScreenState extends State<ChurchMembersScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-        _isLoading = false;
-      });
+      final errorStr = e.toString().toLowerCase();
+      // Check if table doesn't exist yet
+      if (errorStr.contains('pgrst205') ||
+          errorStr.contains('could not find the') ||
+          errorStr.contains('schema cache')) {
+        // Table doesn't exist - show empty state
+        setState(() {
+          _members = [];
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _errorMessage = e.toString();
+          _isLoading = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    final content = _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : _errorMessage.isNotEmpty
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: theme.colorScheme.error,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Error loading members',
+                        style: theme.textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _errorMessage,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: _loadMembers,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            : _members.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.people_outline,
+                            size: 64,
+                            color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No members yet',
+                            style: theme.textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Members will appear here once they join ${widget.churchName}',
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _loadMembers,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _members.length,
+                      itemBuilder: (context, index) {
+                        final member = _members[index];
+                        return _MemberCard(member: member);
+                      },
+                    ),
+                  );
+
+    // When embedded in a tab, don't wrap in Scaffold
+    if (widget.embedded) {
+      return content;
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -67,79 +160,7 @@ class _ChurchMembersScreenState extends State<ChurchMembersScreen> {
         ),
         elevation: 0,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage.isNotEmpty
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 64,
-                          color: theme.colorScheme.error,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Error loading members',
-                          style: theme.textTheme.titleLarge,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _errorMessage,
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                        const SizedBox(height: 24),
-                        ElevatedButton.icon(
-                          onPressed: _loadMembers,
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Retry'),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              : _members.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.people_outline,
-                              size: 64,
-                              color: theme.colorScheme.primary.withValues(alpha: 0.5),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No members yet',
-                              style: theme.textTheme.titleLarge,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Members will appear here once they join ${widget.churchName}',
-                              textAlign: TextAlign.center,
-                              style: theme.textTheme.bodyMedium,
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: _loadMembers,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _members.length,
-                        itemBuilder: (context, index) {
-                          final member = _members[index];
-                          return _MemberCard(member: member);
-                        },
-                      ),
-                    ),
+      body: content,
     );
   }
 }

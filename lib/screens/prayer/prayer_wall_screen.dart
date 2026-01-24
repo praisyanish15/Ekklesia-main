@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/prayer_request_model.dart';
+import '../../models/user_model.dart';
 import '../../services/prayer_service.dart';
 import 'submit_prayer_screen.dart';
 import 'prayer_detail_screen.dart';
@@ -48,12 +49,13 @@ class _PrayerWallScreenState extends State<PrayerWallScreen>
 
     try {
       final authProvider = context.read<AuthProvider>();
-      if (authProvider.currentUser?.currentChurchId == null) {
+      if (authProvider.currentUser?.churchId == null) {
         throw Exception('Please join a church first');
       }
 
-      _churchId = authProvider.currentUser!.currentChurchId;
-      _isLeadership = authProvider.currentUser!.isLeadershipRole;
+      _churchId = authProvider.currentUser!.churchId;
+      _isLeadership = authProvider.currentUser!.role == UserRole.admin ||
+                      authProvider.currentUser!.role == UserRole.commander;
 
       final publicPrayers = await _prayerService.getPublicPrayers(
         churchId: _churchId!,

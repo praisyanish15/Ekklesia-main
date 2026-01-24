@@ -153,12 +153,13 @@ class ChurchService {
   Future<bool> joinChurchWithReferralCode({
     required String referralCode,
     required String userId,
+    bool autoApprove = true, // Auto-approve by default for simpler UX
   }) async {
     try {
       // Find church by referral code
       final churchResponse = await _supabase
           .from('churches')
-          .select('id')
+          .select('id, created_by')
           .eq('referral_code', referralCode.trim().toUpperCase())
           .limit(1);
 
@@ -168,25 +169,46 @@ class ChurchService {
       }
 
       final churchId = churchResponse.first['id'];
+      final createdBy = churchResponse.first['created_by'];
 
       // Check if user is already a member
       final existingMembership = await _supabase
           .from('church_members')
-          .select('id')
+          .select('id, role')
           .eq('church_id', churchId)
           .eq('user_id', userId)
           .limit(1);
 
       if (existingMembership.isNotEmpty) {
-        throw Exception('You are already a member of this church.');
+        // User is already a member - this is OK if they're the creator
+        // Just return success since they're already in
+        return true;
       }
 
-      // Add user to church with 'pending' status (needs admin approval)
-      await _supabase.from('church_members').insert({
+      // Determine role: church creator gets super_admin, others get member (auto-approved)
+      String role;
+      if (userId == createdBy) {
+        role = 'super_admin';
+      } else if (autoApprove) {
+        role = 'member'; // Auto-approved as regular member
+      } else {
+        role = 'pending'; // Needs admin approval
+      }
+
+      // Add user to church
+      final memberData = {
         'church_id': churchId,
         'user_id': userId,
-        'role': 'pending',
-      });
+        'role': role,
+      };
+
+      // If auto-approved, add approval details
+      if (role != 'pending') {
+        memberData['approved_by'] = createdBy;
+        memberData['approved_at'] = DateTime.now().toIso8601String();
+      }
+
+      await _supabase.from('church_members').insert(memberData);
 
       return true;
     } catch (e) {
@@ -219,26 +241,51 @@ class ChurchService {
   /// Get all church members (including pending)
   Future<List<Map<String, dynamic>>> getChurchMembers(String churchId) async {
     try {
-      final response = await _supabase
-          .from('church_members')
-          .select('*, profiles(*)')
-          .eq('church_id', churchId)
-          .order('joined_at', ascending: false);
+      // First try with profiles join
+      try {
+        final response = await _supabase
+            .from('church_members')
+            .select('*, profiles(*)')
+            .eq('church_id', churchId)
+            .order('joined_at', ascending: false);
 
-      // Flatten the nested profiles data
-      return List<Map<String, dynamic>>.from(response.map((member) {
-        final profiles = member['profiles'] as Map<String, dynamic>?;
-        return {
-          'id': member['id'],
-          'role': member['role'],
-          'joined_at': member['joined_at'],
-          'name': profiles?['name'] ?? 'Unknown',
-          'email': profiles?['email'] ?? '',
-          'photo_url': profiles?['photo_url'],
-          'address': profiles?['address'] ?? '',
-          'phone_number': profiles?['phone_number'],
-        };
-      }));
+        // Flatten the nested profiles data
+        return List<Map<String, dynamic>>.from(response.map((member) {
+          final profiles = member['profiles'] as Map<String, dynamic>?;
+          return {
+            'id': member['id'],
+            'user_id': member['user_id'],
+            'role': member['role'],
+            'joined_at': member['joined_at'],
+            'name': profiles?['name'] ?? 'Unknown',
+            'email': profiles?['email'] ?? '',
+            'photo_url': profiles?['photo_url'],
+            'address': profiles?['address'] ?? '',
+            'phone_number': profiles?['phone_number'],
+          };
+        }));
+      } catch (joinError) {
+        // If profiles join fails, try without it
+        final response = await _supabase
+            .from('church_members')
+            .select('*')
+            .eq('church_id', churchId)
+            .order('joined_at', ascending: false);
+
+        return List<Map<String, dynamic>>.from(response.map((member) {
+          return {
+            'id': member['id'],
+            'user_id': member['user_id'],
+            'role': member['role'],
+            'joined_at': member['joined_at'],
+            'name': 'Member',
+            'email': '',
+            'photo_url': null,
+            'address': '',
+            'phone_number': null,
+          };
+        }));
+      }
     } catch (e) {
       throw Exception('Failed to get church members: ${e.toString()}');
     }

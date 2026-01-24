@@ -45,6 +45,10 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Ekklesia needs camera access for face verification when joining a church.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Ekklesia needs photo library access to select profile pictures.</string>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-3940256099942544~1458002511</string>
 	<key>SKAdNetworkItems</key>

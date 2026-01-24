@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/church_service.dart';
+import '../../services/song_service.dart';
 import '../../models/church_model.dart';
 import '../../models/church_theme.dart';
 import '../../utils/validators.dart';
@@ -91,6 +92,16 @@ class _CreateChurchScreenState extends State<CreateChurchScreen> {
         setState(() {
           _generatedReferralCode = church.referralCode;
         });
+
+        // Update the user's churchId to the newly created church
+        await authProvider.updateProfile(churchId: church.id);
+
+        // Refresh the user profile to ensure churchId is updated
+        await authProvider.refreshProfile();
+
+        // Seed default songs for the new church
+        final songService = SongService();
+        await songService.seedDefaultSongs(church.id);
 
         if (mounted) {
           _showSuccessDialog(church);

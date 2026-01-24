@@ -597,7 +597,7 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> {
                 padding: const EdgeInsets.all(16.0),
                 child: ElevatedButton.icon(
                   onPressed: _hasPrayed ? null : _handleIPrayed,
-                  icon: Icon(_hasPrayed ? Icons.check_circle : Icons.prayer_times),
+                  icon: Icon(_hasPrayed ? Icons.check_circle : Icons.volunteer_activism),
                   label: Text(
                     _hasPrayed ? 'You have prayed for this' : 'I Prayed for This',
                     style: const TextStyle(fontSize: 16),

@@ -6,11 +6,13 @@ import '../../services/committee_service.dart';
 class CommitteeMembersScreen extends StatefulWidget {
   final String churchId;
   final String churchName;
+  final bool embedded; // True when used as a tab (no Scaffold)
 
   const CommitteeMembersScreen({
     super.key,
     required this.churchId,
     required this.churchName,
+    this.embedded = false,
   });
 
   @override
@@ -58,6 +60,142 @@ class _CommitteeMembersScreenState extends State<CommitteeMembersScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    final content = _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : _errorMessage.isNotEmpty
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: theme.colorScheme.error,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Error loading committee',
+                        style: theme.textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _errorMessage,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: _loadCommitteeMembers,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            : _totalMembers == 0
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.groups_outlined,
+                            size: 64,
+                            color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No committee members yet',
+                            style: theme.textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Committee members will be appointed by church administrators',
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _loadCommitteeMembers,
+                    child: ListView(
+                      padding: const EdgeInsets.all(16),
+                      children: [
+                        // President
+                        if (_committeeMembers['president']!.isNotEmpty) ...[
+                          _PositionHeader(
+                            icon: Icons.workspace_premium,
+                            title: 'President',
+                          ),
+                          const SizedBox(height: 12),
+                          ..._committeeMembers['president']!
+                              .map((member) => _CommitteeMemberCard(
+                                    member: member,
+                                    showFullDetails: true,
+                                  )),
+                          const SizedBox(height: 24),
+                        ],
+
+                        // Secretary
+                        if (_committeeMembers['secretary']!.isNotEmpty) ...[
+                          _PositionHeader(
+                            icon: Icons.edit_note,
+                            title: 'Secretary',
+                          ),
+                          const SizedBox(height: 12),
+                          ..._committeeMembers['secretary']!
+                              .map((member) => _CommitteeMemberCard(
+                                    member: member,
+                                    showFullDetails: true,
+                                  )),
+                          const SizedBox(height: 24),
+                        ],
+
+                        // Treasurer
+                        if (_committeeMembers['treasurer']!.isNotEmpty) ...[
+                          _PositionHeader(
+                            icon: Icons.account_balance_wallet,
+                            title: 'Treasurer',
+                          ),
+                          const SizedBox(height: 12),
+                          ..._committeeMembers['treasurer']!
+                              .map((member) => _CommitteeMemberCard(
+                                    member: member,
+                                    showFullDetails: true,
+                                  )),
+                          const SizedBox(height: 24),
+                        ],
+
+                        // Committee Members
+                        if (_committeeMembers['member']!.isNotEmpty) ...[
+                          _PositionHeader(
+                            icon: Icons.people,
+                            title: 'Committee Members',
+                          ),
+                          const SizedBox(height: 12),
+                          ..._committeeMembers['member']!
+                              .map((member) => _CommitteeMemberCard(
+                                    member: member,
+                                    showFullDetails: true,
+                                  )),
+                        ],
+
+                        const SizedBox(height: 32),
+                      ],
+                    ),
+                  );
+
+    // When embedded in a tab, don't wrap in Scaffold
+    if (widget.embedded) {
+      return content;
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -69,136 +207,7 @@ class _CommitteeMembersScreenState extends State<CommitteeMembersScreen> {
         ),
         elevation: 0,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage.isNotEmpty
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 64,
-                          color: theme.colorScheme.error,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Error loading committee',
-                          style: theme.textTheme.titleLarge,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _errorMessage,
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                        const SizedBox(height: 24),
-                        ElevatedButton.icon(
-                          onPressed: _loadCommitteeMembers,
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Retry'),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              : _totalMembers == 0
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.groups_outlined,
-                              size: 64,
-                              color: theme.colorScheme.primary.withValues(alpha: 0.5),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No committee members yet',
-                              style: theme.textTheme.titleLarge,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Committee members will be appointed by church administrators',
-                              textAlign: TextAlign.center,
-                              style: theme.textTheme.bodyMedium,
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: _loadCommitteeMembers,
-                      child: ListView(
-                        padding: const EdgeInsets.all(16),
-                        children: [
-                          // President
-                          if (_committeeMembers['president']!.isNotEmpty) ...[
-                            _PositionHeader(
-                              icon: Icons.workspace_premium,
-                              title: 'President',
-                            ),
-                            const SizedBox(height: 12),
-                            ..._committeeMembers['president']!
-                                .map((member) => _CommitteeMemberCard(
-                                      member: member,
-                                      showFullDetails: true,
-                                    )),
-                            const SizedBox(height: 24),
-                          ],
-
-                          // Secretary
-                          if (_committeeMembers['secretary']!.isNotEmpty) ...[
-                            _PositionHeader(
-                              icon: Icons.edit_note,
-                              title: 'Secretary',
-                            ),
-                            const SizedBox(height: 12),
-                            ..._committeeMembers['secretary']!
-                                .map((member) => _CommitteeMemberCard(
-                                      member: member,
-                                      showFullDetails: true,
-                                    )),
-                            const SizedBox(height: 24),
-                          ],
-
-                          // Treasurer
-                          if (_committeeMembers['treasurer']!.isNotEmpty) ...[
-                            _PositionHeader(
-                              icon: Icons.account_balance_wallet,
-                              title: 'Treasurer',
-                            ),
-                            const SizedBox(height: 12),
-                            ..._committeeMembers['treasurer']!
-                                .map((member) => _CommitteeMemberCard(
-                                      member: member,
-                                      showFullDetails: true,
-                                    )),
-                            const SizedBox(height: 24),
-                          ],
-
-                          // Committee Members
-                          if (_committeeMembers['member']!.isNotEmpty) ...[
-                            _PositionHeader(
-                              icon: Icons.people,
-                              title: 'Committee Members',
-                            ),
-                            const SizedBox(height: 12),
-                            ..._committeeMembers['member']!
-                                .map((member) => _CommitteeMemberCard(
-                                      member: member,
-                                      showFullDetails: true,
-                                    )),
-                          ],
-
-                          const SizedBox(height: 32),
-                        ],
-                      ),
-                    ),
+      body: content,
     );
   }
 }

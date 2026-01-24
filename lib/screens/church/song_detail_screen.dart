@@ -3,14 +3,54 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/song_model.dart';
+import '../../models/song_suggestion.dart';
+import '../../services/song_suggestion_service.dart';
+import '../../providers/bible_provider.dart';
+import 'package:provider/provider.dart';
+import 'lyrics_projection_screen.dart';
 
-class SongDetailScreen extends StatelessWidget {
+class SongDetailScreen extends StatefulWidget {
   final Song song;
 
   const SongDetailScreen({
     super.key,
     required this.song,
   });
+
+  @override
+  State<SongDetailScreen> createState() => _SongDetailScreenState();
+}
+
+class _SongDetailScreenState extends State<SongDetailScreen> {
+  final SongSuggestionService _suggestionService = SongSuggestionService();
+  SongSuggestion? _suggestion;
+  bool _isLoadingSuggestion = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSuggestion();
+  }
+
+  Future<void> _loadSuggestion() async {
+    try {
+      final suggestion = await _suggestionService.getSuggestionsForSong(widget.song);
+      if (mounted) {
+        setState(() {
+          _suggestion = suggestion;
+          _isLoadingSuggestion = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingSuggestion = false;
+        });
+      }
+    }
+  }
+
+  Song get song => widget.song;
 
   Future<void> _openInMaps(BuildContext context) async {
     if (song.latitude == null || song.longitude == null) {
@@ -76,6 +116,19 @@ class SongDetailScreen extends StatelessWidget {
         ),
         elevation: 0,
         actions: [
+          // Projection mode button
+          IconButton(
+            icon: const Icon(Icons.present_to_all),
+            tooltip: 'Present',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => LyricsProjectionScreen(song: song),
+                ),
+              );
+            },
+          ),
           // Copy lyrics button
           IconButton(
             icon: const Icon(Icons.copy),
@@ -312,10 +365,71 @@ class SongDetailScreen extends StatelessWidget {
                 ),
               ),
             ),
+
+            // Worship Guide Section
+            if (_isLoadingSuggestion)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_suggestion != null && _suggestion!.hasContent) ...[
+              const SizedBox(height: 32),
+              _WorshipGuideSection(
+                suggestion: _suggestion!,
+                onVersePressed: (verse) => _showVerseDialog(context, verse),
+              ),
+            ],
           ],
         ),
       ),
     );
+  }
+
+  void _showVerseDialog(BuildContext context, String verseRef) {
+    showDialog(
+      context: context,
+      builder: (context) => _VersePreviewDialog(
+        verseReference: verseRef,
+        onOpenInBible: () {
+          Navigator.pop(context); // Close dialog
+          _openVerseInBible(verseRef);
+        },
+      ),
+    );
+  }
+
+  void _openVerseInBible(String verseRef) {
+    // Parse the verse reference (e.g., "Psalm 23:6" -> book="Psalm", chapter=23)
+    final parts = verseRef.split(RegExp(r'[\s:]'));
+    if (parts.length >= 2) {
+      String book = parts[0];
+      // Handle multi-word book names like "1 Corinthians"
+      int chapterIndex = 1;
+      while (chapterIndex < parts.length && int.tryParse(parts[chapterIndex]) == null) {
+        book += ' ${parts[chapterIndex]}';
+        chapterIndex++;
+      }
+
+      if (chapterIndex < parts.length) {
+        final chapter = int.tryParse(parts[chapterIndex]) ?? 1;
+
+        // Navigate to Bible tab with the verse
+        context.read<BibleProvider>().fetchVerses(
+          book: book,
+          chapter: chapter,
+        );
+
+        // Navigate to home and switch to Bible tab
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        // Note: The home screen will need to handle switching to Bible tab
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Opening $verseRef in Bible...'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 }
 
@@ -399,6 +513,290 @@ class _InfoRow extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class _WorshipGuideSection extends StatelessWidget {
+  final SongSuggestion suggestion;
+  final Function(String) onVersePressed;
+
+  const _WorshipGuideSection({
+    required this.suggestion,
+    required this.onVersePressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section Header
+        Row(
+          children: [
+            Icon(
+              Icons.menu_book,
+              size: 24,
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Worship Guide',
+              style: GoogleFonts.cormorantGaramond(
+                fontSize: 22,
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // Suggested Bible Verses
+        if (suggestion.bibleVerses.isNotEmpty) ...[
+          _GuideSubsection(
+            icon: Icons.book,
+            title: 'Suggested Verses',
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: suggestion.bibleVerses.map((verse) {
+                return ActionChip(
+                  label: Text(verse),
+                  onPressed: () => onVersePressed(verse),
+                  avatar: Icon(
+                    Icons.open_in_new,
+                    size: 16,
+                    color: theme.colorScheme.primary,
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        // Themes
+        if (suggestion.themes.isNotEmpty) ...[
+          _GuideSubsection(
+            icon: Icons.label_outline,
+            title: 'Themes',
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: suggestion.themes.map((theme_) {
+                return Chip(
+                  label: Text(theme_),
+                  backgroundColor: theme.colorScheme.secondaryContainer,
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        // Call to Worship
+        if (suggestion.callToWorship != null) ...[
+          _GuideSubsection(
+            icon: Icons.record_voice_over,
+            title: 'Call to Worship',
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                ),
+              ),
+              child: SelectableText(
+                suggestion.callToWorship!,
+                style: GoogleFonts.cormorantGaramond(
+                  fontSize: 16,
+                  fontStyle: FontStyle.italic,
+                  height: 1.6,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        // Prayer Points
+        if (suggestion.prayerPoints != null) ...[
+          _GuideSubsection(
+            icon: Icons.favorite_outline,
+            title: 'Prayer Points',
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: SelectableText(
+                suggestion.prayerPoints!,
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  height: 1.6,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        // Benediction
+        if (suggestion.benediction != null) ...[
+          _GuideSubsection(
+            icon: Icons.auto_awesome,
+            title: 'Closing Benediction',
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    theme.colorScheme.primary.withValues(alpha: 0.1),
+                    theme.colorScheme.secondary.withValues(alpha: 0.1),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                ),
+              ),
+              child: SelectableText(
+                suggestion.benediction!,
+                style: GoogleFonts.cormorantGaramond(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  fontStyle: FontStyle.italic,
+                  height: 1.6,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _GuideSubsection extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final Widget child;
+
+  const _GuideSubsection({
+    required this.icon,
+    required this.title,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: theme.colorScheme.primary.withValues(alpha: 0.7),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        child,
+      ],
+    );
+  }
+}
+
+class _VersePreviewDialog extends StatelessWidget {
+  final String verseReference;
+  final VoidCallback onOpenInBible;
+
+  const _VersePreviewDialog({
+    required this.verseReference,
+    required this.onOpenInBible,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return AlertDialog(
+      title: Row(
+        children: [
+          Icon(Icons.book, color: theme.colorScheme.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              verseReference,
+              style: GoogleFonts.cormorantGaramond(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Tap "Open in Bible" to read this verse in the Bible tab.',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: theme.textTheme.bodyMedium?.color,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Close'),
+        ),
+        TextButton.icon(
+          onPressed: () {
+            Clipboard.setData(ClipboardData(text: verseReference));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Copied: $verseReference'),
+                duration: const Duration(seconds: 1),
+              ),
+            );
+          },
+          icon: const Icon(Icons.copy, size: 18),
+          label: const Text('Copy'),
+        ),
+        ElevatedButton.icon(
+          onPressed: onOpenInBible,
+          icon: const Icon(Icons.open_in_new, size: 18),
+          label: const Text('Open in Bible'),
         ),
       ],
     );

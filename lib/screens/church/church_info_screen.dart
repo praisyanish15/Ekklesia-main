@@ -138,18 +138,22 @@ class _ChurchInfoScreenState extends State<ChurchInfoScreen>
           ChurchMembersScreen(
             churchId: widget.church.id,
             churchName: widget.church.name,
+            embedded: true,
           ),
           SermonsListScreen(
             churchId: widget.church.id,
             churchName: widget.church.name,
+            embedded: true,
           ),
           SongsListScreen(
             churchId: widget.church.id,
             churchName: widget.church.name,
+            embedded: true,
           ),
           CommitteeMembersScreen(
             churchId: widget.church.id,
             churchName: widget.church.name,
+            embedded: true,
           ),
         ],
       ),

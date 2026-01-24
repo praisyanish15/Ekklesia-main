@@ -6,10 +6,11 @@ import '../../services/church_service.dart';
 import '../../models/church_model.dart';
 import '../../models/user_model.dart';
 import '../../widgets/banner_ad_widget.dart';
-import '../church/church_search_screen.dart';
+import '../church/my_church_tab.dart';
 import '../church/church_info_screen.dart';
+import '../church/songs_list_screen.dart';
+import '../church/church_members_screen.dart';
 import '../bible/bible_screen.dart';
-import '../worship/worship_tab.dart';
 import '../notifications/notifications_screen.dart';
 import '../donations/donations_screen.dart';
 
@@ -25,9 +26,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Widget> _screens = [
     const HomeTab(),
-    const ChurchSearchScreen(),
+    const MyChurchTab(),
     const BibleScreen(),
-    const WorshipTab(),
     const NotificationsScreen(),
     const DonationsScreen(),
   ];
@@ -50,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.notifications),
             onPressed: () {
               setState(() {
-                _selectedIndex = 4;
+                _selectedIndex = 3; // Updated index after removing Worship tab
               });
             },
           ),
@@ -142,15 +142,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.church),
-            label: 'Churches',
+            label: 'My Church',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.book),
             label: 'Bible',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.music_note),
-            label: 'Worship',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.notifications),
@@ -304,10 +300,10 @@ class _HomeTabState extends State<HomeTab> {
                       title: 'Worship',
                       color: Colors.deepPurple,
                       onTap: () {
-                        // Switch to Worship tab
+                        // Navigate to My Church tab (worship/songs are now in My Church)
                         final homeScreen = context.findAncestorStateOfType<_HomeScreenState>();
                         homeScreen?.setState(() {
-                          homeScreen._selectedIndex = 3;
+                          homeScreen._selectedIndex = 1; // My Church tab
                         });
                       },
                     ),
@@ -536,18 +532,51 @@ class _MyChurchCard extends StatelessWidget {
                   _ChurchQuickLink(
                     icon: Icons.people,
                     label: 'Members',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ChurchMembersScreen(
+                            churchId: church.id,
+                            churchName: church.name,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                   _ChurchQuickLink(
                     icon: Icons.mic,
                     label: 'Sermons',
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Sermons feature coming soon!'),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                    },
                   ),
                   _ChurchQuickLink(
                     icon: Icons.music_note,
                     label: 'Worship',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SongsListScreen(
+                            churchId: church.id,
+                            churchName: church.name,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                   _ChurchQuickLink(
                     icon: Icons.volunteer_activism,
                     label: 'Donate',
+                    onTap: () {
+                      Navigator.of(context).pushNamed('/donations');
+                    },
                   ),
                 ],
               ),
@@ -562,34 +591,43 @@ class _MyChurchCard extends StatelessWidget {
 class _ChurchQuickLink extends StatelessWidget {
   final IconData icon;
   final String label;
+  final VoidCallback? onTap;
 
   const _ChurchQuickLink({
     required this.icon,
     required this.label,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          size: 24,
-          color: theme.colorScheme.primary,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 24,
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: theme.textTheme.bodySmall?.color,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-            color: theme.textTheme.bodySmall?.color,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

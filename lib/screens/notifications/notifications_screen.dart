@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/notification_model.dart';
@@ -14,9 +15,60 @@ class NotificationsScreen extends StatefulWidget {
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
   final NotificationService _notificationService = NotificationService();
+  List<NotificationModel> _notifications = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNotifications();
+  }
+
+  Future<void> _loadNotifications() async {
+    final authProvider = context.read<AuthProvider>();
+    final userId = authProvider.currentUser?.id;
+
+    if (userId == null) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Please log in to view notifications';
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final notifications = await _notificationService.getUserNotifications(userId);
+      if (mounted) {
+        setState(() {
+          _notifications = notifications;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        // If table doesn't exist or other error, show empty state gracefully
+        setState(() {
+          _notifications = [];
+          _isLoading = false;
+          // Only show error if it's not a "relation does not exist" error
+          final errorStr = e.toString();
+          if (!errorStr.contains('does not exist') && !errorStr.contains('42P01')) {
+            _errorMessage = errorStr.replaceAll('Exception: ', '');
+          }
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final authProvider = context.watch<AuthProvider>();
     final userId = authProvider.currentUser?.id;
 
@@ -24,50 +76,100 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       return const Center(child: Text('Please log in to view notifications'));
     }
 
-    return StreamBuilder<List<NotificationModel>>(
-      stream: _notificationService.streamNotifications(userId),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-        if (snapshot.hasError) {
-          return Center(
-            child: Text('Error: ${snapshot.error}'),
-          );
-        }
-
-        final notifications = snapshot.data ?? [];
-
-        if (notifications.isEmpty) {
-          return const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.notifications_none, size: 64, color: Colors.grey),
-                SizedBox(height: 16),
-                Text(
-                  'No notifications yet',
-                  style: TextStyle(fontSize: 16),
-                ),
-              ],
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 64, color: theme.colorScheme.error),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14, color: theme.colorScheme.error),
+              ),
             ),
-          );
-        }
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _loadNotifications,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(8),
-          itemCount: notifications.length,
-          itemBuilder: (context, index) {
-            final notification = notifications[index];
-            return _NotificationCard(
-              notification: notification,
-              onTap: () => _handleNotificationTap(notification),
-              onDismiss: () => _dismissNotification(notification),
-            );
-          },
-        );
-      },
+    if (_notifications.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _loadNotifications,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height * 0.7,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.notifications_none,
+                    size: 80,
+                    color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'No Notifications',
+                    style: GoogleFonts.cormorantGaramond(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 48),
+                    child: Text(
+                      'You will receive notifications for prayer requests, church events, and announcements here',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        color: theme.textTheme.bodyMedium?.color,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  TextButton.icon(
+                    onPressed: _loadNotifications,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Refresh'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadNotifications,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(8),
+        itemCount: _notifications.length,
+        itemBuilder: (context, index) {
+          final notification = _notifications[index];
+          return _NotificationCard(
+            notification: notification,
+            onTap: () => _handleNotificationTap(notification),
+            onDismiss: () => _dismissNotification(notification),
+          );
+        },
+      ),
     );
   }
 

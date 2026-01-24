@@ -1,8 +1,40 @@
+import 'dart:convert';
+import 'package:flutter/services.dart' show rootBundle;
 import '../models/song_model.dart';
 import 'supabase_service.dart';
 
 class SongService {
   final _supabase = SupabaseService.client;
+
+  /// Seed default worship songs for a church from the bundled JSON
+  Future<void> seedDefaultSongs(String churchId) async {
+    try {
+      // Check if church already has songs
+      final existingSongs = await getChurchSongs(churchId);
+      if (existingSongs.isNotEmpty) {
+        return; // Church already has songs, don't seed
+      }
+
+      // Load songs from bundled JSON
+      final jsonString = await rootBundle.loadString('lib/assets/songs.json');
+      final jsonData = json.decode(jsonString);
+      final songs = jsonData['songs'] as List;
+
+      // Insert songs in batches
+      for (final song in songs) {
+        await _supabase.from('songs').insert({
+          'church_id': churchId,
+          'title': song['title'],
+          'lyrics': song['lyrics'] ?? 'Lyrics coming soon...',
+          'category': song['category'] ?? 'Worship',
+          'chords': (song['chords'] as List?)?.join('\n'),
+        });
+      }
+    } catch (e) {
+      // Silently fail - songs are optional
+      print('Failed to seed default songs: $e');
+    }
+  }
 
   /// Get all songs for a church
   Future<List<Song>> getChurchSongs(String churchId) async {

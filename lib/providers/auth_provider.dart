@@ -184,4 +184,17 @@ class AuthProvider with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
   }
+
+  /// Refresh the current user's profile from the database
+  /// Call this after joining/leaving a church to update the churchId
+  Future<void> refreshProfile() async {
+    if (_currentUser == null) return;
+
+    try {
+      _currentUser = await _authService.getCurrentUserProfile();
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = e.toString();
+    }
+  }
 }

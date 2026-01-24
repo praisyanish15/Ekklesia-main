@@ -12,11 +12,13 @@ import 'add_song_screen.dart';
 class SongsListScreen extends StatefulWidget {
   final String churchId;
   final String churchName;
+  final bool embedded; // True when used as a tab in bottom navigation
 
   const SongsListScreen({
     super.key,
     required this.churchId,
     required this.churchName,
+    this.embedded = false,
   });
 
   @override
@@ -31,6 +33,7 @@ class _SongsListScreenState extends State<SongsListScreen> {
   String _errorMessage = '';
   String _searchQuery = '';
   String? _selectedCategory;
+  bool _featureComingSoon = false;
 
   final List<String> _categories = ['All', 'Worship', 'Praise', 'Hymn'];
 
@@ -44,6 +47,7 @@ class _SongsListScreenState extends State<SongsListScreen> {
     setState(() {
       _isLoading = true;
       _errorMessage = '';
+      _featureComingSoon = false;
     });
 
     try {
@@ -55,10 +59,27 @@ class _SongsListScreenState extends State<SongsListScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-        _isLoading = false;
-      });
+      final errorStr = e.toString().toLowerCase();
+      // Check if table doesn't exist - PGRST205 is the PostgREST error for missing relation
+      final isMissingTable = errorStr.contains('pgrst205') ||
+          errorStr.contains('could not find') ||
+          errorStr.contains('schema cache') ||
+          errorStr.contains('public.songs') ||
+          (errorStr.contains('relation') && errorStr.contains('does not exist'));
+
+      if (isMissingTable) {
+        setState(() {
+          _songs = [];
+          _filteredSongs = [];
+          _isLoading = false;
+          _featureComingSoon = true;
+        });
+      } else {
+        setState(() {
+          _errorMessage = e.toString();
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -80,22 +101,45 @@ class _SongsListScreenState extends State<SongsListScreen> {
     });
   }
 
+  Future<void> _seedDefaultSongs() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await _songService.seedDefaultSongs(widget.churchId);
+      await _loadSongs();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Default songs loaded successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load songs: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Worship Songs',
-          style: GoogleFonts.cormorantGaramond(
-            fontSize: 24,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        elevation: 0,
-      ),
-      body: Column(
+    final content = Column(
         children: [
           // Banner Ad
           const Padding(
@@ -158,7 +202,7 @@ class _SongsListScreenState extends State<SongsListScreen> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : _errorMessage.isNotEmpty
+                : _featureComingSoon
                     ? Center(
                         child: Padding(
                           padding: const EdgeInsets.all(24.0),
@@ -166,32 +210,71 @@ class _SongsListScreenState extends State<SongsListScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
-                                Icons.error_outline,
-                                size: 64,
-                                color: theme.colorScheme.error,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'Error loading songs',
-                                style: theme.textTheme.titleLarge,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                _errorMessage,
-                                textAlign: TextAlign.center,
-                                style: theme.textTheme.bodyMedium,
+                                Icons.music_note,
+                                size: 80,
+                                color: theme.colorScheme.primary.withValues(alpha: 0.5),
                               ),
                               const SizedBox(height: 24),
-                              ElevatedButton.icon(
-                                onPressed: _loadSongs,
-                                icon: const Icon(Icons.refresh),
-                                label: const Text('Retry'),
+                              Text(
+                                'Worship Songs Coming Soon!',
+                                style: GoogleFonts.cormorantGaramond(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'We\'re setting up the worship library. Stay tuned!',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.inter(
+                                  fontSize: 16,
+                                  color: theme.textTheme.bodyMedium?.color,
+                                ),
+                              ),
+                              const SizedBox(height: 32),
+                              Icon(
+                                Icons.construction,
+                                size: 32,
+                                color: Colors.orange,
                               ),
                             ],
                           ),
                         ),
                       )
-                    : _filteredSongs.isEmpty
+                    : _errorMessage.isNotEmpty
+                        ? Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.error_outline,
+                                    size: 64,
+                                    color: theme.colorScheme.error,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Error loading songs',
+                                    style: theme.textTheme.titleLarge,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    _errorMessage,
+                                    textAlign: TextAlign.center,
+                                    style: theme.textTheme.bodyMedium,
+                                  ),
+                                  const SizedBox(height: 24),
+                                  ElevatedButton.icon(
+                                    onPressed: _loadSongs,
+                                    icon: const Icon(Icons.refresh),
+                                    label: const Text('Retry'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        : _filteredSongs.isEmpty
                         ? Center(
                             child: Padding(
                               padding: const EdgeInsets.all(24.0),
@@ -219,6 +302,14 @@ class _SongsListScreenState extends State<SongsListScreen> {
                                     textAlign: TextAlign.center,
                                     style: theme.textTheme.bodyMedium,
                                   ),
+                                  if (_searchQuery.isEmpty) ...[
+                                    const SizedBox(height: 24),
+                                    ElevatedButton.icon(
+                                      onPressed: _isLoading ? null : _seedDefaultSongs,
+                                      icon: const Icon(Icons.library_music),
+                                      label: const Text('Load Default Songs'),
+                                    ),
+                                  ],
                                 ],
                               ),
                             ),
@@ -247,32 +338,62 @@ class _SongsListScreenState extends State<SongsListScreen> {
                           ),
           ),
         ],
+      );
+
+    final fab = Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        final user = authProvider.currentUser;
+        final isAdmin = user?.role == UserRole.admin || user?.role == UserRole.commander;
+
+        if (!isAdmin) return const SizedBox.shrink();
+
+        return FloatingActionButton.extended(
+          onPressed: () async {
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AddSongScreen(churchId: widget.churchId),
+              ),
+            );
+
+            if (result == true) {
+              _loadSongs();
+            }
+          },
+          icon: const Icon(Icons.add),
+          label: const Text('Add Song'),
+        );
+      },
+    );
+
+    // When embedded in bottom navigation, don't wrap in Scaffold
+    if (widget.embedded) {
+      return Stack(
+        children: [
+          content,
+          Positioned(
+            bottom: 16,
+            right: 16,
+            child: fab,
+          ),
+        ],
+      );
+    }
+
+    // When used as a standalone screen, wrap in Scaffold with AppBar
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Worship Songs',
+          style: GoogleFonts.cormorantGaramond(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        elevation: 0,
       ),
-      floatingActionButton: Consumer<AuthProvider>(
-        builder: (context, authProvider, child) {
-          final user = authProvider.currentUser;
-          final isAdmin = user?.role == UserRole.admin || user?.role == UserRole.commander;
-
-          if (!isAdmin) return const SizedBox.shrink();
-
-          return FloatingActionButton.extended(
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => AddSongScreen(churchId: widget.churchId),
-                ),
-              );
-
-              if (result == true) {
-                _loadSongs();
-              }
-            },
-            icon: const Icon(Icons.add),
-            label: const Text('Add Song'),
-          );
-        },
-      ),
+      body: content,
+      floatingActionButton: fab,
     );
   }
 }

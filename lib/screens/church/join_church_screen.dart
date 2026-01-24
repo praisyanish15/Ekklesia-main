@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/church_service.dart';
+import '../../services/song_service.dart';
 import '../../models/church_model.dart';
 import 'face_verification_screen.dart';
 
@@ -73,32 +74,42 @@ class _JoinChurchScreenState extends State<JoinChurchScreen> {
   Future<void> _joinChurch() async {
     if (_foundChurch == null) return;
 
-    // First, verify face
-    final faceImagePath = await Navigator.push<String>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const FaceVerificationScreen(),
-      ),
-    );
+    final authProvider = context.read<AuthProvider>();
+    final currentUserId = authProvider.currentUser?.id;
 
-    if (faceImagePath == null) {
-      // User cancelled face verification
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Face verification is required to join a church'),
-            backgroundColor: Colors.orange,
-          ),
-        );
+    // Check if the current user is the church creator - skip face verification
+    final isChurchCreator = currentUserId != null &&
+                            _foundChurch!.createdBy == currentUserId;
+
+    String? faceImagePath;
+
+    if (!isChurchCreator) {
+      // Only require face verification for non-creators
+      faceImagePath = await Navigator.push<String>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const FaceVerificationScreen(),
+        ),
+      );
+
+      if (faceImagePath == null) {
+        // User cancelled face verification
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Face verification is required to join a church'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
       }
-      return;
     }
 
     setState(() {
       _isLoading = true;
     });
 
-    final authProvider = context.read<AuthProvider>();
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     final churchName = _foundChurch!.name;
@@ -120,10 +131,20 @@ class _JoinChurchScreenState extends State<JoinChurchScreen> {
       // Update the user's churchId in their profile
       await authProvider.updateProfile(churchId: churchId);
 
+      // Refresh the user profile to ensure churchId is updated
+      await authProvider.refreshProfile();
+
+      // Seed default songs for the church (if not already seeded)
+      final songService = SongService();
+      await songService.seedDefaultSongs(churchId);
+
       if (mounted) {
+        final message = isChurchCreator
+            ? 'Successfully joined $churchName!'
+            : 'Successfully joined $churchName! Your identity has been verified.';
         scaffoldMessenger.showSnackBar(
           SnackBar(
-            content: Text('Successfully joined $churchName! Your identity has been verified.'),
+            content: Text(message),
             backgroundColor: Colors.green,
           ),
         );

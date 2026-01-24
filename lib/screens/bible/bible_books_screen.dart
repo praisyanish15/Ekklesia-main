@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../models/bible_book.dart';
+import '../../providers/bible_provider.dart';
 
 class BibleBooksScreen extends StatelessWidget {
   const BibleBooksScreen({super.key});
@@ -319,13 +321,14 @@ class _ChapterSelectionSheet extends StatelessWidget {
                 final chapterNumber = index + 1;
                 return InkWell(
                   onTap: () {
-                    Navigator.pop(context);
-                    // TODO: Navigate to chapter view with book and chapter
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Opening ${book.name} Chapter $chapterNumber'),
-                      ),
+                    // Fetch the chapter verses using BibleProvider
+                    context.read<BibleProvider>().fetchVerses(
+                      book: book.name,
+                      chapter: chapterNumber,
                     );
+                    // Pop back to Bible screen (pop twice - once for sheet, once for books screen)
+                    Navigator.pop(context); // Close bottom sheet
+                    Navigator.pop(context); // Go back to Bible screen
                   },
                   borderRadius: BorderRadius.circular(12),
                   child: Container(

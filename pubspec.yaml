@@ -78,3 +78,5 @@ flutter:
   assets:
     - assets/images/logo.png
     - assets/bible/
+    - lib/assets/songs.json
+    - lib/assets/song_suggestions.json

@@ -86,13 +86,14 @@ class _WorshipTabState extends State<WorshipTab> {
 
         // If user hasn't joined a church
         if (user?.churchId == null || _userChurch == null) {
-          return _NoChurchView();
+          return _NoChurchView(onRefresh: _loadUserChurch);
         }
 
         // Show songs list for the user's church
         return SongsListScreen(
           churchId: _userChurch!.id,
           churchName: _userChurch!.name,
+          embedded: true, // Embedded in bottom navigation, no AppBar needed
         );
       },
     );
@@ -100,6 +101,10 @@ class _WorshipTabState extends State<WorshipTab> {
 }
 
 class _NoChurchView extends StatelessWidget {
+  final VoidCallback onRefresh;
+
+  const _NoChurchView({required this.onRefresh});
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -134,8 +139,11 @@ class _NoChurchView extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             ElevatedButton.icon(
-              onPressed: () {
-                Navigator.of(context).pushNamed('/join-church');
+              onPressed: () async {
+                final result = await Navigator.of(context).pushNamed('/join-church');
+                if (result == true) {
+                  onRefresh();
+                }
               },
               icon: const Icon(Icons.group_add),
               label: const Text('Join Church'),
@@ -159,6 +167,16 @@ class _NoChurchView extends StatelessWidget {
                   vertical: 16,
                 ),
               ),
+            ),
+            const SizedBox(height: 24),
+            TextButton.icon(
+              onPressed: () async {
+                final authProvider = context.read<AuthProvider>();
+                await authProvider.refreshProfile();
+                onRefresh(); // Trigger reload after profile refresh
+              },
+              icon: const Icon(Icons.refresh),
+              label: const Text('Refresh'),
             ),
           ],
         ),
